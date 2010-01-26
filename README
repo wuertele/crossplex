@@ -1,0 +1,42 @@
+Crossplex v2.0 by David Wuertele (dave@crossplex.org)
+
+INSTALLATION
+------------
+
+The makefile simply copies the contents of the bin and lib directories to the
+destination of your choice.
+
+Default usage (installs in /usr/local/lib/crossplex-1.0 and /usr/local/bin):
+
+          make install
+
+Specify target prefix:
+
+          make install DESTDIR=/some/path
+
+Specify individual lib and bin directories:
+
+          make install LIBDIR=/some/path/to/lib BINDIR=/some/path/to/bin
+
+
+USE
+---
+
+The lib directory consists of a set of includable makefiles.  Once you have
+installed according to the instructions above, you can include the main.mk file
+in your own makefile.  There are a few variables you will need to define in
+order to use crossplex's features.  Here is a minimal example:
+
+  # -*- makefile -*-	Example Makefile
+  CROSSPLEX_BUILD_SYSTEM := /usr/local/lib/crossplex
+  BUILD_TOP        := /absolute/path/to/my/build/directory
+  THIRD_PARTY      := $(shell pwd)/third-party  
+  PATCHES          := $(shell pwd)/patches
+  UNPACKED_SOURCES := $(shell pwd)/unpacked-sources
+  include $(CROSSPLEX_BUILD_SYSTEM)/main.mk
+
+That's what you need to have to include the crossplex package.  Now to use it,
+you will need to read the documentation.
+
+Have fun!
+dave@crossplex.org
