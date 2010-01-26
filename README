@@ -1,5 +1,7 @@
 Crossplex v0.9 by David Wuertele (dave@crossplex.org)
 Configure, Build, and Release Embedded OS Distributions with Make
+Read an introduction to Crossplex at http://crossplex.org/about
+Learn how to use Crossplex at http://crossplex.org/documentation 
 
 INSTALLATION
 ------------
