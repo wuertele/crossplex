@@ -1,0 +1,62 @@
+#!/usr/bin/perl -w
+#	-*- Perl -*-			crossplex-project:
+#
+#	(usage)% crossplex-project <NAME> [ <PATH> ]
+#
+#	Inputs:		<NAME>		REQUIRED:  a name to use for the project.
+#			<PATH>		OPTIONAL:  a path on the host system where the project template will be created (default: same as <NAME>)
+#			
+#	Outputs:	<PATH>/*.mk	some makefiles, directories, and links that implement a basic configuration
+#	Outputs:	<PATH>/patches
+#	Outputs:	<PATH>/thirdparty
+#
+#	Author:  David Wuertele		Mon Jan  22 15:48:36 2001
+#
+#	This program Copyright (C) 2001 David Wuertele
+#	This program is distributed under the GNU General Public License v2 - see the 
+#	accompanying COPYING file for more details. 
+
+use strict;
+
+my $libdir = "/home/dave/lib/crossplex-1.0";
+
+my ($project_name, $project_dir, $force);
+ARGS: while (my $arg = shift) {
+    if ($arg eq '-f') { $force++; next ARGS; }
+    if (! defined $project_name) { $project_name = $project_dir = $arg; next ARGS; }
+    if (! defined $project_dir)  { $project_dir = $arg; next ARGS; }
+    
+}
+
+die "Error: Need project name.  Usage:\n\n\t\$ $0 <NAME> [ <PATH> ]\n\n" if (! defined $project_name);
+
+if (-d $project_dir && ! defined ($force)) {
+    die "Error:  project \"$project_name\" already exists at \"$project_dir\".  Force overwrite of existing project with \"-f\".";
+}
+
+print_system ("/bin/mkdir", "-p", $project_dir);
+
+if (-f "$project_dir/Makefile" && ! defined ($force)) {
+    die "Error:  top-level Makefile exists.  Force overwrite of existing project with \"-f\".";    
+}
+
+print_system ("/bin/ln", "-sf", "$libdir/templates/Project-Makefile", "$project_dir/Makefile");
+
+if (-f "$project_dir/paths.mk" && ! defined ($force)) {
+    die "Error:  top-level paths.mk exists.  Force overwrite of existing project with \"-f\".";    
+}
+
+print_system ("/bin/cp", "-f", "$libdir/templates/paths.mk", "$project_dir/paths.mk");
+
+print_system ("/bin/mkdir", "-p", "$project_dir/thirdparty/GPL");
+print_system ("/bin/mkdir", "-p", "$project_dir/thirdparty/REDIST_OK");
+print_system ("/bin/mkdir", "-p", "$project_dir/thirdparty/NO_REDIST");
+print_system ("/bin/mkdir", "-p", "$project_dir/patches/GPL");
+print_system ("/bin/mkdir", "-p", "$project_dir/patches/REDIST_OK");
+print_system ("/bin/mkdir", "-p", "$project_dir/patches/NO_REDIST");
+
+sub print_system {
+    my @cmd = @_;
+    print STDERR join (" ", @cmd), "\n";
+    system (@cmd);
+}

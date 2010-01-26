@@ -1,0 +1,8 @@
+The files in this directory are meant to be copied elsewhere and customized.
+They are not meant to be used directly from this directory.
+Here is a description of their application:
+
+Name Here		Customized Name		Description
+----------------	---------------		-----------
+Project-Makefile	Makefile		top-level project build directory makefile
+						no editing required: can be a link

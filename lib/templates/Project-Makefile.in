@@ -1,0 +1,12 @@
+# -*- makefile -*-		Makefile
+# davew@motorola.com		Wed Mar 26 10:50:09 2008
+# Steal This Program!!!
+
+CROSSPLEX_BUILD_SYSTEM := @@@LIBDIR@@@
+
+include $(wildcard paths.mk)
+
+include $(CROSSPLEX_BUILD_SYSTEM)/main.mk
+
+include $(wildcard *-config.mk)
+

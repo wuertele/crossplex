@@ -1,0 +1,27 @@
+# -*- makefile -*-		Examples of how to use crosstool just for unpacking and patching third-party sources
+# davew@motorola.com		Tue Oct  6 13:00:21 2009
+
+# See "Makefile" in this directory for some required variable definitions.
+# Not all of the defs in "Makefile" are required in this simple example,
+# but defining them doesn't hurt anything.
+# This file is included (along with the other example config files)
+# by the "Makefile" after those variables are defined.
+# If you want to copy just this config file for use as a template somewhere else,
+# the easiest way is to also copy "Makefile" along with it.
+# You could easily merge the "Makefile" and this file simply by REPLACING 
+# "Makefile"'s last line with the contents of this file.
+
+
+# Unpack and patch the udev-132 package in an arbitrary location
+# Note: all paths should be absolute.
+ARBITRARY_LOCATION_FOR_UDEV := /export/test/udev
+UDEV_VERSION                := udev-132
+WHERE_TO_FIND_UDEV          := $(THIRD_PARTY)/GPL
+UNPACK_HERE                 := $(ARBITRARY_LOCATION_FOR_UDEV)/unpacked_sources
+WHERE_TO_PATCH_UDEV         := $(ARBITRARY_LOCATION_FOR_UDEV)/work
+GPL_PATCHES                 := $(PATCHES)/GPL
+
+$(eval $(call Patchify_Rules,$(UDEV_VERSION),$(UNPACK_HERE),$(WHERE_TO_FIND_UDEV),$(WHERE_TO_PATCH_UDEV),,$(GPL_PATCHES)))
+
+unpack-and-patch-udev: $($(WHERE_TO_PATCH_UDEV)/$(UDEV_VERSION)_SOURCE_PREPARED)
+
