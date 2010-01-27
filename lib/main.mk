@@ -55,16 +55,6 @@ include $(CROSSPLEX_BUILD_SYSTEM)/linux-kernel.mk
 # How to build local source
 include $(CROSSPLEX_BUILD_SYSTEM)/local.mk
 
-# How to build various standard third party software
-# include $(CROSSPLEX_BUILD_SYSTEM)/ltp.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/strace.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/ltt-control.mk
-## include $(CROSSPLEX_BUILD_SYSTEM)/trace-toolkit.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/ncurses.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/procps.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/pciutils.mk
-# include $(CROSSPLEX_BUILD_SYSTEM)/lsscsi.mk
-
 # How to build various deployment kits
 include $(CROSSPLEX_BUILD_SYSTEM)/kit.mk
 
