@@ -25,6 +25,8 @@ ifndef Unpack_Rules
 unpack-clean:
 	rm -rf $(sort $(UNPACK_CLEAN))
 
+sourceclean: unpack-clean
+
 clean: unpack-clean
 
 
@@ -126,6 +128,11 @@ define Patch_Rules
 	$(call Cpio_Findup,$2,$3)
 	touch $$@
     endif
+
+    $1_$2_$3_$4_$5_replidupliclean:
+	rm -rf $3
+
+    sourceclean: $1_$2_$3_$4_$5_replidupliclean
 
     $(call Patch_Rules_Core,$4/$1,$2,$3)
     $(foreach subdir,$5,$(call Patch_Rules_Core,$4/$1/$(subdir),$2,$3))

@@ -450,6 +450,12 @@ endef
 
     $1_$2:                 $(patsubst %,$($1_TARGETFS_PREFIX)/%,$(call TargetFS_Package_Installables,$5,$2,$4))
 
+    # run the appropriate readelf on each file in the installables, and if any report dynamic libs that aren't in the _RUNTIME_DEPENDENCIES list, print them out.
+    $(patsubst %,$($1_TARGETFS_PREFIX)/%-check-runtime-dependencies,$(call TargetFS_Package_Installables,$5,$2,$4)): %-check-runtime-dependencies:
+	@$($1_TARGETFS_BUILD_ENV) $($1_TARGETFS_TUPLE)-readelf --dynamic $$* 2>/dev/null | perl -ne 'if (/NEEDED.+\[([^\.]+)/) { if (! grep ($$$$1, qw($($2_RUNTIME_DEPENDENCIES)))) { print "$2:  $$$$1\n"}} '
+
+    check-runtime-dependencies: $(patsubst %,$($1_TARGETFS_PREFIX)/%-check-runtime-dependencies,$(call TargetFS_Package_Installables,$5,$2,$4))
+
     # Add to the lists of targets the pkgconfig file
     $1_TARGETFS_TARGETS += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
     $1_$2_TARGETS       += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))

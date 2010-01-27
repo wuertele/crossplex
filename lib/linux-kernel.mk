@@ -104,4 +104,74 @@ ifndef Configure_Kernel
   endef
 
 
+  # $1 = unique kernel name (eg. "davix/kernels/linux")
+  # $2 = linux kernel version (eg "linux-2.6.24")
+  # $3 = build top (eg "/path/to/build")
+  # $4 = kernel tuple (was "$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE))")
+  # $5 = path(s) to (optional) top-level directories for initramfs packaging
+  # $6 = path(s) to (optional) top-level files containing listings for initramfs packaging
+  # $7 = dependencies to satisfy before trying to pack up $5 or $6
+  # $8 = kernel build PATH environment variable
+  # $9 = list of build tags
+  # $(10) = list of install tags
+  # $(11) = list of patch tags
+  # $(12) = kernel build toolchain dependency (was "$($(firstword $(foreach token,$8,$(if $($(token)_TOOLCHAIN),$(token))))_TARGETFS_TARGETS)")
+  define Build_Linux_Kernel_No_TFS
+
+    $(if $($1_Build_Linux_Kernel_No_TFS_Args),$(error Called Build_Linux_Kernel_No_TFS with non-unique name $1))
+
+    $1_Build_Linux_Kernel_No_TFS_Args := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7 , 8=$8 , 9=$9 10=$(10) 11=$(11) 12=$(12)
+
+    $1_KERNEL_SAFENAME   := $(subst /,.,$(subst =,_,$1))
+    $1_KERNEL_PARENT_DIR := $3
+    $1_KERNEL_PREFIX     := $3/$1
+
+    $(call Patchify_Rules,$2,$(UNPACKED_SOURCES),$(THIRD_PARTY)/GPL,$3,,$(PATCHES)/GPL,$(11))
+
+    $1_KERNEL_MAKE_OPTS := ARCH=$(call Linux_Arch,$4,$2)
+    $1_KERNEL_MAKE_OPTS += CROSS_COMPILE=$4-
+    $1_KERNEL_MAKE_OPTS += CC=$4-gcc
+    $1_KERNEL_MAKE_OPTS += LD=$4-ld
+    $1_KERNEL_MAKE_OPTS += NM=$4-nm
+    $1_KERNEL_MAKE_OPTS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="$(strip $5 $6)")
+
+    $1-kernel-source-prepared: $$($3/$2_SOURCE_PREPARED) 
+
+    $1-kernel-source-clean:
+	rm -rf $3
+
+    $3/$2-build/.config: $$($3/$2_SOURCE_PREPARED) $(12)
+	mkdir -p $$(@D)
+	cp $3/$2/.config-build $$@
+
+    $3/$2-build/.htmldocs: $$($3/$2_SOURCE_PREPARED) $(12)
+	mkdir -p $$(@D)
+	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) htmldocs
+
+    $1_KERNEL_FILENAME := $3/$2-build/vmlinux
+
+     $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
+	+ yes "" | $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS)
+	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+
+     $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7
+	+ yes "" | $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) bzImage
+	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+
+    $3/$2-build/vmlinuz: $3/$2-build/vmlinux
+	gzip -3fc $$< > $$@
+
+    $1-kernel-compressed-image: $3/$2-build/vmlinuz
+
+    $1_KERNEL_BZIMAGE_FILENAME    := $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage
+
+    $1_KERNEL_COMPRESSED_FILENAME := $3/$2-build/vmlinuz
+
+  endef
+
+
 endif

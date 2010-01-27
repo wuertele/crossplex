@@ -108,6 +108,7 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
   # $1 = targetfs name
   # $2 = name of component library of glibc
   # $3 = relative path of component library's files
+  # $4 = additional sublib order-only dependencies
   define Glibc_Sub_Lib_Depends
 
     $1_TARGETFS_INSTALLABLE_COMPONENT += $2
@@ -120,13 +121,14 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
     $1_$2_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
-    $($1_TARGETFS_PREFIX)/$3: $($1_glibc_TARGETS)
+    $($1_TARGETFS_PREFIX)/$3: $($1_glibc_TARGETS) | $4
 
   endef
 
   # $1 = targetfs name
   # $2 = name of component library of glibc
   # $3 = relative path of component library's files
+  # $4 = additional sublib order-only dependencies
   define Glibc_Sub_Lib_Depends_Devel
 
     $1_TARGETFS_INSTALLABLE_COMPONENT += $2
@@ -139,7 +141,7 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
     $1_$2_DEV_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
-    $($1_TARGETFS_PREFIX)/$3: $($1_glibc_TARGETS)
+    $($1_TARGETFS_PREFIX)/$3: $($1_glibc_TARGETS) | $4
 
   endef
 
@@ -230,6 +232,41 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
     # TODO:  add inter-library dependencies for the above component libraries
 
     # there are some libraries that aren't defined completely yet
+
+  endef
+
+  # $1 = build top
+  # $2 = toolchain (targetfs) name
+  # $3 = target tuple
+  # $4 = toolchain path on host
+  # $5 = path code (UNIMPLEMENTED)
+  define Glibc_Prebuilt_Toolchain
+
+    $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5))
+
+    $2/toolchain_RUNTIMES  += glibc
+    $2/toolchain_TOOLCHAIN += glibc
+    $2/toolchain_TOOLCHAIN_TARGET_TUPLE = $3
+
+    $2_TOOLCHAIN_TARGETS = $(patsubst $4/%,$($2/toolchain_TARGETFS_PREFIX)/%,$(foreach dirname,bin include lib share $3 libexec usr,$(wildcard $4/$(dirname))))
+
+    $2/toolchain_glibc_TARGETS = $(patsubst $4/%,$($2/toolchain_TARGETFS_PREFIX)/%,$(foreach dirname,bin include lib share $3 libexec usr,$(wildcard $4/$(dirname))))
+
+    $$($2/toolchain_glibc_TARGETS): $($2/toolchain_TARGETFS_PREFIX)/%: $4/%
+	mkdir -p $$(@D)
+	ln -sf $$< $$@
+
+    # Tell the toolchain TargetFS where to find the files that make up each of the component libraries of glibc
+    # If a module calls out one of these component libraries as a runtime dependency, the module's TargetFS should know how to copy it from here
+    $(foreach library_name,$(GLIBC_LIBRARIES_SO),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_S1) $(GLIBC_LIBRARIES_1UAS) $(GLIBC_LIBRARIES_6U) $(GLIBC_LIBRARIES_2UAS) $(GLIBC_LIBRARIES_2US),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-$(patsubst libc-%.so,%,$(notdir $(wildcard $4/lib/libc-*.so))).so,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_S1),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$(if $(filter mips%,$3),lib/$(library_name).so.1,lib/$(library_name)-linux.so.2),$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_1US) $(GLIBC_LIBRARIES_1UAS),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_1US),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-1.0.so,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_1US) $(GLIBC_LIBRARIES_1UAS) $(GLIBC_LIBRARIES_2UAS) $(GLIBC_LIBRARIES_2US) $(GLIBC_LIBRARIES_0UAS) $(GLIBC_LIBRARIES_6U),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$(patsubst $4/%,%,$(wildcard $4/lib/$(library_name).so) $(wildcard $4/usr/lib/$(library_name).so) $(wildcard $4/usr/lib/$(library_name).so)),$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_6U),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.6,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_2UAS) $(GLIBC_LIBRARIES_2US),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.2,$$($2/toolchain_glibc_TARGETS)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_0UAS),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.0,$$($2/toolchain_glibc_TARGETS)))
 
   endef
 

@@ -354,6 +354,8 @@ ifndef COMMON_MAKE_INCLUDED
   $(if $(call crossplex_version_gt,$(VERSION3),$(VERSION5)),$(error crossplex_version_gt($(VERSION3),$(VERSION5)) returns $(call crossplex_version_gt,$(VERSION3),$(VERSION5))))
   $(if $(call crossplex_version_gt,$(VERSION4),$(VERSION5)),$(error crossplex_version_gt($(VERSION4),$(VERSION5)) returns $(call crossplex_version_gt,$(VERSION4),$(VERSION5))))
 
+  tolower = $(shell echo $1 | tr [:upper:] [:lower:])
+  toupper = $(shell echo $1 | tr [:upper:] [:lower:])
 
 #  # User can set their path to find gcc.  We supply the rest
 #  GCC_PATH := $(shell gcc --print-search-dirs | grep programs)

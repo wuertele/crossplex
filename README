@@ -1,6 +1,13 @@
 Crossplex v0.9 by David Wuertele (dave@crossplex.org)
 Configure, Build, and Release Embedded OS Distributions with Make
 
+ABOUT CROSSPLEX
+---------------
+
+Crossplex is a library of GNU Make rules meant to simplify the
+configuration and building of multiple embedded Linux operating
+systems in a production environment.
+
 Read an introduction to Crossplex at http://crossplex.org/about
 Learn how to use Crossplex at http://crossplex.org/documentation
 Download Crossplex versions at http://crossplex.org/downloads
