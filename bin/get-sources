@@ -1,0 +1,261 @@
+#!/usr/bin/perl -w
+#	-*- Perl -*-		get-sources:	fetch sources of thirdparty packages using the freshmeat database
+#
+#	(usage)% get-sources glibc binutils-2.20
+#
+#	David Wuertele	Wed Nov 11 15:45:23 2009	Steal This Program!!!
+
+use strict;
+use Data::Dumper;
+use WWW::Freshmeat;
+use LWP::UserAgent;
+use HTTP::Request;
+use FileHandle;
+
+my @packages;
+
+if ($#ARGV >= 0) {
+    @packages = @ARGV;
+} else {
+    print STDERR "Usage: get-sources <package> <package...>"
+}
+
+my $fm = new WWW::Freshmeat (token => '81BDbCA18QG47FHBGMvK');
+
+$fm->proxy (['http', 'ftp'], 'http://wwwgate0.mot.com:1080/');
+
+foreach my $package (@packages) {
+    fetch_latest_project_tarball ($package);
+}
+
+sub fetch_latest_project_tarball {
+    my $project_and_maybe_version = shift;
+    my $want_project_name = $project_and_maybe_version;
+    my $want_version;
+
+    if ($project_and_maybe_version =~ m/([^\d]+)([\d\.\-]+)/) {
+	my $project_and_maybe_dash = $1;
+	$want_version = $2;
+	if ($want_version =~ m/^-(\d.+)/) {
+	    $want_version = $1;
+	}
+	if ($want_version =~ m/(.+)\.$/) {
+	    $want_version = $1;
+	}
+	if ($project_and_maybe_dash =~ m/(.+)-/) {
+	    $want_project_name = $1;
+	} else {
+	    $want_project_name = $project_and_maybe_dash;
+	}
+    }
+    print STDERR "Looking for project $want_project_name, ", defined ($want_version)? "version $want_version\n" : "latest version\n";
+
+    my $try_project_name = $want_project_name;
+    my $project = $fm->retrieve_project ($try_project_name);
+    if (!defined $project) {
+	print STDERR "Can't retrieve project with ID $want_project_name.  Trying package subsets...\n";
+	if ($want_project_name =~ /(.+)\-[^-]+/) {
+	    $try_project_name = $1;
+	    $project = $fm->retrieve_project ($try_project_name);
+	}
+    }
+    my $got_project_name = $try_project_name;
+    if (!defined $project) {
+	print STDERR "Failed to discover project for $want_project_name.\n";
+	return;
+    }
+
+    my $latest_version = $project->version();
+    if (!defined ($want_version)) {
+	$want_version = $latest_version;
+    }
+
+    my %licenses;
+    my @license_list = split (/\,\s+/, $project->license_list());
+    print STDERR "$got_project_name-$latest_version license list: (", join (", ", @license_list), ")\n";
+    map { $licenses{$_}++ } @license_list;
+    my $license_dir;
+    foreach my $use_actual_name (qw( GPL LGPL FDL )) {
+	if (defined ($licenses{$use_actual_name})) {
+	    $license_dir = $use_actual_name;
+	    goto GOT_DIR;
+	}
+    }
+    
+    foreach my $redist_license ('APL',
+				'AFPL',
+				'APSL',
+				'Artistic License',
+				'Boost Software License',
+				'BSD',
+				'CDDL',
+				'Freeware',
+				'MIT',
+				'MPL',
+				'NPL',
+				'OSI Approved',
+				'Public Domain',
+				'Python',
+				'Shareware') {
+	
+	if (defined ($licenses{$redist_license})) {
+	    $license_dir = 'REDIST_OK';
+	    goto GOT_DIR;
+	}
+    }
+
+    if (!defined ($license_dir)) {
+	if ($#license_list >= 0) {
+	    $license_dir = shift @license_list;
+	    print STDERR "couldn't find good directory for $got_project_name-$latest_version licenses:", join (", ", @license_list), "\n";
+	} else {
+	    $license_dir = 'unknown';
+	    print STDERR "couldn't discover license for $got_project_name-$latest_version\n";
+	}
+    }
+    
+  GOT_DIR:
+    
+    system ("/bin/mkdir", "-p", $license_dir);
+    my $direct_download = $project->direct_download();
+    my $download_url;
+    if (ref ($direct_download) eq 'HASH') {
+	$download_url = $direct_download->{redirector};
+    } else {
+	print Dumper ($project);
+	return;
+    }
+    
+    my $ua = new LWP::UserAgent ( max_redirect => (($want_version ne $latest_version)? 0 : 1) ) or die "Can't create new UserAgent: $!";
+    $ua->proxy (['http', 'ftp'], 'http://wwwgate0.mot.com:1080/');
+    $ua->agent("test-fresh/1.0");
+    my $request = new HTTP::Request ("GET", $download_url);
+    print STDERR "Freshmeat direct download redirector for $got_project_name-$latest_version is $download_url...\n";
+    my $response = $ua->request ($request);
+    my $filename;
+    if ($response->is_success) {
+	$download_url = $response->header ('location');
+	if (! defined $download_url) {
+	    $download_url = $response->previous->header ('location');
+	}
+	print STDERR "redirected to $download_url.\n";
+	my $uri = new URI ($download_url);
+	my @segments = $uri->path_segments;
+	my $latest_filename = pop @segments;
+	if ($latest_filename =~ /$want_project_name-$latest_version\.tar\.gz/) {
+	    $filename = "$want_project_name-$want_version\.tar\.gz";
+	} elsif ($latest_filename =~ /$want_project_name-$latest_version\.tar\.bz2/) {
+	    $filename = "$want_project_name-$want_version\.tar\.bz2";
+	}
+    } else {
+	if ($response->code == 302) {
+	    $download_url = $response->header ('location');
+	    print STDERR "redirected to $download_url.\n";
+
+	    my $uri = new URI ($download_url);
+	    my @segments = $uri->path_segments;
+	    my $latest_filename = pop @segments;
+
+	    my $want_filename;
+	    if ($latest_filename =~ /$want_project_name-$latest_version\.tar\.gz/) {
+		$want_filename = "$want_project_name-$want_version\.tar\.gz";
+	    } elsif ($latest_filename =~ /$want_project_name-$latest_version\.tar\.bz2/) {
+		$want_filename = "$want_project_name-$want_version\.tar\.bz2";
+	    }
+
+	    if (! defined $want_filename) {
+		$want_filename = "$want_project_name-$want_version\.tar\.gz";
+	    }
+
+	    $uri->path_segments (@segments, $want_filename);
+	    print STDERR "getting $uri\n";
+	    $request = new HTTP::Request ("GET", $uri);
+	    $response = $ua->request ($request);
+
+	    print STDERR "\$response->is_success is ", $response->is_success, "\n";
+	    print STDERR "\$response->header ('content_type') is ", $response->header ('content_type'), "\n";
+	    if ($response->is_success and $response->header ('content_type') eq 'text/ftp-dir-listing') {
+		my $ftp_url;
+
+		if ($response->content =~ /$want_project_name-$latest_version\.tar\.gz/) {
+		    $filename = "$want_project_name-$want_version.tar.gz";
+		} elsif ($response->content =~ /$want_project_name-$latest_version\.tar\.bz2/) {
+		    $filename = "$want_project_name-$want_version.tar.bz2";
+		}
+
+		$ftp_url = $response->base . $filename;
+		print STDERR "attempting to download $ftp_url\n";
+		my $ftp_request = new HTTP::Request ("GET", $ftp_url);
+		$response = $ua->request ($ftp_request);
+	    }
+
+
+	    if (! $response->is_success) {
+		print STDERR "no file at $uri, trying some options.\n";
+		if ($segments[$#segments] =~ /$want_project_name-$latest_version/) {
+		    print STDERR "Path contains version number.  Searching for proper directory...\n";
+		    print STDERR "$segments[$#segments] => ";
+		    $segments[$#segments] = "$want_project_name-$want_version";
+		    print STDERR "$segments[$#segments]\n";
+		} elsif ($segments[$#segments] =~ /$want_project_name/) {
+		    print STDERR "Path contains project name.  Searching for proper directory...\n";
+		    print STDERR "$segments[$#segments] => ";
+		    $segments[$#segments] = "$want_project_name";
+		    print STDERR "$segments[$#segments]\n";
+		} elsif ($segments[$#segments] =~ /v2.4/) {
+		    print STDERR "Looks like old linux dir... trying v2.6 ...\n";
+		    print STDERR "$segments[$#segments] => ";
+		    $segments[$#segments] = "v2.6";
+		    print STDERR "$segments[$#segments]\n";
+		} 
+		$uri->path_segments (@segments, $want_filename);
+		print STDERR "getting $uri\n";
+		$request = new HTTP::Request ("GET", $uri);
+		$response = $ua->request ($request);
+
+		if (! $response->is_success) {
+		    print STDERR "Still no file at $uri, trying different suffix...\n";
+		    print STDERR "$want_filename => ";
+		    if ($want_filename eq "$want_project_name-$want_version\.tar\.gz") {
+			$want_filename = "$want_project_name-$want_version\.tar\.bz2";
+		    } elsif ($want_filename eq "$want_project_name-$want_version\.tar\.bz2") {
+			$want_filename = "$want_project_name-$want_version\.tar\.gz";
+		    }
+		    print STDERR "$want_filename\n";			
+
+		    $uri->path_segments (@segments, $want_filename);
+		    print STDERR "getting $uri\n";
+		    $request = new HTTP::Request ("GET", $uri);
+		    $response = $ua->request ($request);
+
+		    if (! $response->is_success) {
+			print STDERR "STILL no file at $uri.  Giving up.\n";
+			return;
+		    }
+		}
+	    }
+
+	    $uri = new URI ($response->base);
+	    @segments = $uri->path_segments;
+	    $filename = pop @segments;
+	} else {
+	    print STDERR "Unknown error.\n";
+	    print Dumper ($response);
+	    return;
+	}
+    }
+    
+    if (! defined ($filename) or $filename !~ /\S/) {
+	print Dumper ($response);	
+	exit -1;
+    }
+    
+    print STDERR "Saving $filename.\n";
+    my $fh = new FileHandle (">$license_dir/" . $filename);
+    if (defined ($fh)) {
+	$fh->print ($response->content);
+	$fh->close;
+    } else {
+	printf STDERR "problem creating $filename: $!\n";
+    }
+}

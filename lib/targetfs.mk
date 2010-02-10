@@ -36,7 +36,19 @@ ifndef Configure_TargetFS
 
   # Given a list of targetfs names and potentially a special token "PATH", expand into a colon-separated path of common executable paths rooted at each targetfs dir.
   # The special "PATH" token gets replaced by the host PATH environment variable.
-  TargetFS_Decode_Path = $(call cmerge,:,$(foreach token,$1,$(if $(filter PATH,$(token)),$(PATH),$(call TargetFS_Subpaths,$($(token)_TARGETFS_PREFIX)))))
+  TargetFS_Decode_Path = $(call cmerge,:,$(foreach token,$1,$(if $(filter PATH,$(token)),$(PATH),$(if $(filter $2,$(token)),$(call TargetFS_Subpaths,$3/$2),$(call TargetFS_Subpaths,$($(token)_TARGETFS_PREFIX))))))
+
+  # Given a path "/some/path", expand it into a list of common include paths like "/some/path/include /some/path/usr/include", etc.
+  TargetFS_Subincludes = $(if $1,$(foreach subdir,include usr/include usr/local/include,-I$1/$(subdir)))
+
+  # Given a list of targetfs names, expand into a list of compiler include directives rooted at each targetfs dir.
+  TargetFS_Decode_Includes = $(foreach token,$1,$(call TargetFS_Subincludes,$($(token)_TARGETFS_PREFIX)))
+
+  # Given a path "/some/path", expand it into a list of common library paths like "/some/path/lib /some/path/usr/lib", etc.
+  TargetFS_Sublibraries = $(if $1,$(foreach subdir,lib usr/lib usr/local/lib,-L$1/$(subdir)))
+
+  # Given a list of targetfs names, expand into a list of compiler linker search dirs rooted at each targetfs dir.
+  TargetFS_Decode_Libraries = $(foreach token,$1,$(call TargetFS_Sublibraries,$($(token)_TARGETFS_PREFIX)))
 
   # Given a list of targetfs names and potentially a special token "PATH", compute a unique string that can be used as a directory for building with that path
   TargetFS_Decode_Work = $(call cmerge,_,work $(foreach token,$1,$(if $(filter PATH,$(token)),PATH,$($(token)_TARGETFS_SAFENAME))))
@@ -70,10 +82,12 @@ ifndef Configure_TargetFS
 
     $1_TARGETFS_PKGCONFIG  := $(patsubst %/,%,$(dir $2/$1))/pkgconfig/$(notdir $2/$1)
 
-    $1_TARGETFS_BUILD_PATH := $(call TargetFS_Decode_Path,$3)
+    $1_TARGETFS_BUILD_PATH := $(call TargetFS_Decode_Path,$3,$1,$2)
 
-    $1_TARGETFS_BUILD_ENV  := PATH=$(call TargetFS_Decode_Path,$3)
+    $1_TARGETFS_BUILD_ENV  := PATH=$(call TargetFS_Decode_Path,$3,$1,$2)
     $1_TARGETFS_BUILD_ENV  += PKG_CONFIG_PATH=$(patsubst %/,%,$(dir $2/$1))/pkgconfig/$(notdir $2/$1)
+    $1_TARGETFS_BUILD_ENV  += CFLAGS="$(call TargetFS_Decode_Includes,$3)"
+    $1_TARGETFS_BUILD_ENV  += LDFLAGS="$(call TargetFS_Decode_Libraries,$3)"
 
     $1_TARGETFS_RUNTIMES         := $(call TargetFS_Search_Definition,$3,RUNTIMES)
     $1_TARGETFS_RUNTIMES_TARGETS := $($(firstword $(foreach token,$3,$(if $($(token)_RUNTIMES),$(token))))_$($(firstword $(foreach token,$3,$(if $($(token)_RUNTIMES),$(token))))_RUNTIMES)_TARGETS)

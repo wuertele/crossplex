@@ -22,7 +22,7 @@ ifndef Configure_Kernel
 
   include $(CROSSPLEX_BUILD_SYSTEM)/targetfs.mk
 
-  LINUX_ARCHMAP_linux-2.6.18_i386 := i686-%
+#  LINUX_ARCHMAP_linux-2.6.18_i386 := i686-%
   LINUX_ARCHMAP_x86    := i686-%
   LINUX_ARCHMAP_mips   := mips%
 

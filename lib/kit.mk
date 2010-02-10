@@ -48,9 +48,9 @@ ifndef Magic_Tarball_Kit
 	echo $4/$1/$1-staging/isolinux/LINUX
 	echo $($3_KERNEL_BZIMAGE_FILENAME)
 
-    $4/$1/$1.iso: $4/$1/$1-staging/isolinux/LINUX $4/$1/$1-staging/isolinux/isolinux.cfg $4/$1/$1-staging/isolinux/isolinux.bin
+    $4/$1/$1.iso: $($2_TARGETFS_PREFIX)/bin/mkisofs $4/$1/$1-staging/isolinux/LINUX $4/$1/$1-staging/isolinux/isolinux.cfg $4/$1/$1-staging/isolinux/isolinux.bin
 	mkdir -p $$(@D)
-	mkisofs -o $$@ -b isolinux/isolinux.bin -no-emul-boot -boot-info-table $4/$1/$1-staging
+	$($2_TARGETFS_PREFIX)/bin/mkisofs -o $$@ -b isolinux/isolinux.bin -no-emul-boot -boot-info-table $4/$1/$1-staging
 
     $1_ISO_FILENAME := $4/$1/$1.iso
 

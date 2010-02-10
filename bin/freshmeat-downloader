@@ -1,0 +1,651 @@
+#!/usr/bin/perl -w
+#	-*- Perl -*-		get-sources:	fetch sources of thirdparty packages using the freshmeat database
+#
+#	(usage)% get-sources glibc binutils-2.20
+#
+#	David Wuertele	Wed Nov 11 15:45:23 2009	Steal This Program!!!
+
+use strict;
+use Data::Dumper;
+use LWP::UserAgent;
+use HTTP::Request;
+use FileHandle;
+use XML::Simple qw();
+
+my @packages;
+
+if ($#ARGV >= 0) {
+    @packages = @ARGV;
+} else {
+    print STDERR "Usage: get-sources <package> <package...>"
+}
+
+my $fm = new LWP::UserAgent;
+my $fm_token = '81BDbCA18QG47FHBGMvK';
+
+$fm->proxy (['http', 'ftp'], 'http://wwwgate0.mot.com:1080/');
+
+if ($packages[0] eq 'auto') {
+    @packages = get_random_packages();
+} elsif ($packages[0] eq 'test') {
+    @packages = get_test_packages();
+}
+
+my @specific_licenses = ('GPL', 'LGPL', 'FDL');
+
+my @redist_ok_licenses =  ('APL',
+			   'AFPL',
+			   'APSL',
+			   'Artistic License',
+			   'Boost Software License',
+			   'BSD',
+			   'BSD Revised',
+			   'CDDL',
+			   'Freeware',
+			   'MIT/X',
+			   'MPL',
+			   'NPL',
+			   'OSI Approved',
+			   'Public Domain',
+			   'Common Public',
+			   'Python',
+			   'Shareware',
+			   'zlib/libpng',
+			   );
+
+
+my $files_downloaded = 0;
+my $files_attempted = 0;
+foreach my $package (@packages) {
+    $files_attempted++;
+    if (fetch_project_tarball ($package) > 0) {
+	$files_downloaded++;
+    } 
+}
+
+print STDERR "\nDownloaded $files_downloaded out of $files_attempted attempts.\n";
+
+exit 0 if ($files_downloaded > 0);
+exit -1;
+
+sub parse_project_and_maybe_version {
+    my $project_and_maybe_version = shift;
+    
+    my $want_project_name = $project_and_maybe_version;
+    my $want_version;
+
+    if ($project_and_maybe_version =~ m/([^\d]+)[\.-]([\d\.\-]+)/) {
+	my $project_and_maybe_dash = $1;
+	$want_version = $2;
+	if ($want_version =~ m/^-(\d.+)/) {
+	    $want_version = $1;
+	}
+	if ($want_version =~ m/(.+)\.$/) {
+	    $want_version = $1;
+	}
+	if ($project_and_maybe_dash =~ m/^(.+)-$/) {
+	    $want_project_name = $1;
+	} else {
+	    $want_project_name = $project_and_maybe_dash;
+	}
+    }
+
+    if (defined $want_version) {
+	print "parsing \"$project_and_maybe_version\" resulted in project \"$want_project_name\" and version \"$want_version\".\n";
+    } else {
+	print "parsing \"$project_and_maybe_version\" resulted in project \"$want_project_name\", no specific version.\n";
+    }
+
+    return ($want_project_name, $want_version);
+}
+
+sub get_project_data {
+    my $want_project_name = shift;
+
+    my $try_project_name = $want_project_name;
+    my $url = "http://freshmeat.net/projects/" . $try_project_name . ".xml?auth_code=" . $fm_token;
+    my $response = $fm->get ($url);
+    if ($response->is_success) {
+	my $xml = $response->content();
+	my $data = eval { XML::Simple::XMLin ($xml, ForceArray => ['approved-url','recent-release']); };
+	if ($@) {
+	    # Retry
+	    print STDERR "Got malformed XML for $want_project_name.  Retrying.\n";
+	    return get_project_data ($want_project_name);
+	}
+	return $data;
+    } else {
+      if ($response->code eq '404') {
+ 	print STDERR "Can't retrieve project with ID $want_project_name.  Trying package subsets...\n";
+ 	if ($want_project_name =~ /(.+)\-[^-]+/) {
+	    print STDERR "Trying package subsets...\n";
+	    return get_project_data ($1);
+ 	}
+	print STDERR "giving up.\n";
+	return undef;
+      } else {
+        print STDERR "Could not GET freshmeat project (" . $response->status_line . ")";
+	return undef;
+      }
+    }
+    
+}
+
+sub get_test_packages {
+    return qw(autoconf-2.63
+	      autoconf-2.64
+	      automake-1.10.2
+	      automake-1.11
+	      bash-3.2
+	      binutils-2.15
+	      binutils-2.16.1
+	      binutils-2.17
+	      binutils-2.17.50.0.12
+	      binutils-2.18
+	      binutils-2.20
+	      busybox-1.12.1
+	      busybox-1.4.0
+	      cairo-1.8.6
+	      doxygen
+	      expat-2.0.1
+	      fontconfig-2.4.2
+	      freetype-2.3.8
+	      gcc-3.3.6
+	      gcc-3.4.3
+	      gcc-3.4.5
+	      gcc-3.4.6
+	      gcc-4.2.0
+	      gcc-4.2-20070307
+	      gcc-4.3.0
+	      gcc-4.4.1
+	      gdb-6.4
+	      gdb-6.5
+	      gdb-6.8
+	      gdb-7.0
+	      glibc-2.10.1
+	      glibc-2.3.6
+	      glibc-2.4
+	      glibc-2.5
+	      glibc-2.7
+	      glibc-libidn-2.5
+	      glibc-linuxthreads-2.3.6
+	      glibc-linuxthreads-2.5
+	      glibc-ports-2.10.1
+	      glibc-ports-2.3.6
+	      glibc-ports-2.4
+	      glibc-ports-2.5
+	      glibc-ports-2.7
+	      glproto-1.4.9
+	      hyts_ZipFile
+	      inputproto-1.4.4
+	      inputproto-1.5.0
+	      kbproto-1.0.3
+	      ksymoops-2.4.11
+	      libdrm-2.4.5
+	      libfontenc-1.0.2
+	      libICE-1.0.5
+	      libpciaccess-0.10.5
+	      libpng-1.2.35
+	      libSM-1.1.0
+	      libtool-1.5.26
+	      libtool-2.2.4
+	      libtool-2.2.6
+	      libX11-1.1
+	      libX11-1.1.5
+	      libX11-1.2
+	      libXau-1.0.4
+	      libxcb-1.1
+	      libxcb-1.1.92
+	      libxcb-1.1.93
+	      libxcb-1.2
+	      libXdamage-1.1.1
+	      libXdmcp-1.0.2
+	      libXext-1.0.5
+	      libXfixes-4.0.3
+	      libXfont-1.4.0
+	      libxkbfile-1.0.5
+	      libXrender-0.9.4
+	      libXt-1.0.5
+	      libXxf86vm-1.0.2
+	      linux-2.2.0
+	      linux-2.4.0
+	      linux-2.6.0
+	      linux-2.6.12
+	      linux-2.6.12.2
+	      linux-2.6.12-mipsel-mot-dch
+	      linux-2.6.15
+	      linux-2.6.15.7
+	      linux-2.6.16
+	      linux-2.6.16.62
+	      linux-2.6.18
+	      linux-2.6.18.8
+	      linux-2.6.19
+	      linux-2.6.20
+	      linux-2.6.20.1
+	      linux-2.6.20.10
+	      linux-2.6.20.11
+	      linux-2.6.20.12
+	      linux-2.6.20.13
+	      linux-2.6.20.14
+	      linux-2.6.20.15
+	      linux-2.6.20.16
+	      linux-2.6.20.17
+	      linux-2.6.20.18
+	      linux-2.6.20.19
+	      linux-2.6.20.2
+	      linux-2.6.20.20
+	      linux-2.6.20.21
+	      linux-2.6.20.3
+	      linux-2.6.20.4
+	      linux-2.6.20.5
+	      linux-2.6.20.6
+	      linux-2.6.20.7
+	      linux-2.6.20.8
+	      linux-2.6.20.9
+	      linux-2.6.21.7
+	      linux-2.6.22
+	      linux-2.6.23
+	      linux-2.6.23.17
+	      linux-2.6.23.3
+	      linux-2.6.23.8
+	      linux-2.6.24
+	      linux-2.6.25-android-1.0_r1
+	      linux-2.6.28.4
+	      linux-2.6.28.7
+	      linux-2.6.29
+	      linux-libc-headers-2.6.12.0
+	      lsscsi-0.17
+	      ltp-full-20080731
+	      ltt-0.9.6-pre4
+	      ltt-control-0.10-12062006
+	      ltt-control-0.6-28042006
+	      ltt-control-0.8-04062006
+	      lttng-modules-0.3
+	      make-3.81
+	      mesa_20090313
+	      mesa-20090313
+	      Mesa-7.2
+	      mesa_7_3
+	      mesa-7.3
+	      Mesa-7.3
+	      MMAPI
+	      ncurses-5.4
+	      newlib-1.17.0
+	      NotepadCodeLab
+	      openssh-5.2p1
+	      openssl-0.9.8j
+	      pciutils-3.0.3
+	      pixman-0.14.0
+	      pkg-config-0.23
+	      prngd-0.9.29
+	      procps-2.0.7
+	      procps-3.2.7
+	      procps-3.2.8
+	      pthread-stubs-0.1
+	      Python-2.6.1
+	      randrproto-1.3.0
+	      recordproto-1.13.2
+	      Release-2.6.18-4.1
+	      renderproto-0.9.3
+	      resourceproto-1.0.2
+	      scrnsaverproto-1.1.0
+	      stblinux-2.6.12
+	      stblinux-2.6.12-5.0
+	      stblinux-2.6.18-4.1
+	      stblinux-2.6.18-6.1
+	      stblinux-2.6.27-20081015
+	      strace-4.5.14
+	      strace-4.5.18
+	      syslinux-3.73
+	      syslinux-3.83
+	      termcap-1.3.1
+	      termcap-2.0.8
+	      TraceToolkit-0.9.5
+	      trapproto-3.4.3
+	      udev-132
+	      util-linux-2.13-pre7
+	      util-macros-1.2.1
+	      videoproto-2.2.2
+	      xcb-proto-1.1
+	      xcb-proto-1.4
+	      xcmiscproto-1.1.2
+	      xextproto-7.0.3
+	      xextproto-7.0.5
+	      xf86bigfontproto-1.1.2
+	      xf86dgaproto-2.0.3
+	      xf86driproto-2.0.4
+	      xf86miscproto-0.9.2
+	      xf86-video-intel-2.4.2
+	      xf86-video-vmware-10.16.5
+	      xf86vidmodeproto-2.2.2
+	      xineramaproto-1.1.2
+	      xorg-docs-1.4
+	      xorg-server-1.5.1
+	      xorg-server-1.6.0
+	      xproto-7.0.13
+	      xproto-7.0.15
+	      xtrans-1.2.1
+	      xtrans-1.2.3
+	      zlib-1.2.1
+	      zlib-1.2.3);
+}
+
+sub get_many_packages {
+#    return qw (Python-2.6.1 busybox-1.4.0 gcc-4.2.0 linux-2.6.28.7 glibc-ports-2.5 autoconf-2.64 automake-1.11 binutils-2.20 gdb-6.8 glibc-2.5 glibc-linuxthreads-2.5 libtool-2.2.4 pkg-config-0.23 syslinux-3.83);
+
+    my %permalinks;
+    LETTER: foreach my $letter ('a' .. 'z') {
+	PAGE: foreach my $page (1 .. 10) {
+	    my $url = "http://freshmeat.net/search.xml?q=$letter;page=$page;auth_code=" . $fm_token;
+	    my $response = $fm->get ($url);
+	    if ($response->is_success) {
+		my $xml = $response->content();
+		my $data = XML::Simple::XMLin ($xml, ForceArray => ['approved-url','recent-release']);
+		map { $permalinks{$data->{'projects'}{'project'}{$_}{'permalink'}}++; } keys %{$data->{'projects'}{'project'}};
+	    } else {
+		print STDERR "letter $letter crapped out at $page.\n";
+		next LETTER;
+	    }
+	}
+    }
+    return keys %permalinks;
+}
+
+sub get_random_packages {
+    my %permalinks;
+    my $letter = (("a" .. "z")[rand(26)]);
+    while (1) {
+	my $page = rand(100);
+	my $url = "http://freshmeat.net/search.xml?q=$letter;page=$page;auth_code=" . $fm_token;
+	my $response = $fm->get ($url);
+	if ($response->is_success) {
+	    my $xml = $response->content();
+	    next if (! defined $xml);
+	    my $data = XML::Simple::XMLin ($xml, ForceArray => ['approved-url','recent-release']);
+	    map { $permalinks{$data->{'projects'}{'project'}{$_}{'permalink'}}++; } keys %{$data->{'projects'}{'project'}};
+	    my @permalinks_list = keys %permalinks;
+	    next if ($#permalinks_list < 0);
+	    return keys %permalinks;
+	} 
+    }
+}
+
+sub determine_license_category {
+    my $project_data = shift;
+
+    if (! defined $project_data->{'license-list'} or ref ($project_data->{'license-list'}) eq "HASH") {
+	print STDERR "Can't determine license.\n";
+	print Dumper ($project_data);
+	return "UNKNOWN";
+    }
+
+    my %licenses = map { $_ => 1 } split (/\,\s+/, $project_data->{'license-list'});
+
+    foreach my $use_actual_name (@specific_licenses) {
+ 	if (defined ($licenses{$use_actual_name})) {
+	    return $use_actual_name;
+ 	}
+    }
+    
+    foreach my $redist_license (@redist_ok_licenses) {
+	if (defined ($licenses{$redist_license})) {
+	    return 'REDIST_OK';
+	}
+    }
+
+    print STDERR "Didnt find (", join (":", keys %licenses), ") in any list.\n";
+    my @license_list = keys %licenses;
+    return shift @license_list;
+}
+
+sub redir_url {
+    my  $fm = shift;
+    my $url = shift;
+    $fm->requests_redirectable([]);
+    my $response = $fm->get ($url) or return $url;
+    if ($response->is_redirect) {
+	#http://www.perlmonks.org/?node_id=147608
+	my $referral_uri = $response->header('Location');
+	{
+	    # Some servers erroneously return a relative URL for redirects,
+	    # so make it absolute if it not already is.
+	    local $URI::ABS_ALLOW_RELATIVE_SCHEME = 1;
+	    my $base = $response->base;
+	    $referral_uri = $HTTP::URI_CLASS->new ($referral_uri, $base)
+		->abs($base)->as_string;
+	}
+	return $referral_uri;
+    } else {
+	return $url;
+    }
+}
+
+sub guess_uri_for {
+    my $fm = shift;
+    my $project_data = shift;
+    my $want_project_name = shift;
+    my $want_version = shift;
+
+    my $download_url = redir_url ($fm, $project_data->{'direct-download'}{'redirector'});
+    if (! defined $download_url) {
+	print STDERR "Unable to access download URL.\n";
+	# print STDERR Dumper ($project_data);
+	return ();
+    }
+    print "Redirected to $download_url\n";
+    my $download_label = $project_data->{'direct-download'}{'label'};
+    my $download_type = $project_data->{'direct-download'}{'type'};
+
+    my $uri = new URI ($download_url);
+    my @segments = $uri->path_segments;
+
+    my $latest_version = $project_data->{'recent-releases'}{'recent-release'}[0]{'version'};
+    if ($want_version eq $latest_version and $download_url !~ /\/$/) {
+	return ($uri);
+    }
+
+    my %files;
+    if ($download_url =~ /\/$/) {
+	$files{original} = "";
+    } else {
+	$files{original} = pop @segments;
+    }
+
+    if (defined $want_version and length ($want_version) > 0) {
+	$files{targz} = $want_project_name . "-" . $want_version . ".tar.gz";
+	$files{tgz} = $want_project_name . "-" . $want_version . ".tgz";
+	$files{tarbz2} = $want_project_name . "-" . $want_version . ".tar.bz2";
+	$files{tbz} = $want_project_name . "-" . $want_version . ".tbz";
+	$files{zip} = $want_project_name . "-" . $want_version . ".zip";
+    }
+
+    my %paths;
+    @{$paths{original}} = @segments;
+    @{$paths{parent}} = @segments[0 .. $#segments-1];
+    if (defined $want_version and length ($want_version) > 0) {
+	@{$paths{project_version}} = @segments[0 .. $#segments-1]; push @{$paths{project_version}}, "$want_project_name-$want_version";
+    }
+    @{$paths{project}} = @segments[0 .. $#segments-2]; push @{$paths{project}}, "$want_project_name";
+    @{$paths{v26}} = @segments[0 .. $#segments-2]; push @{$paths{v26}}, "v2.6";
+    my @paths_order = qw (original parent project_version project);
+    push @paths_order, "v26" if ($want_project_name eq 'linux');
+
+    my %uris;
+    foreach my $arch (qw (targz tgz tarbz2 tbz zip original)) {
+	next if (! defined $files{$arch});
+	map { my $new_uri = new URI ($download_url);
+	      if (defined $paths{$_}) {
+		  if ($download_url =~ /sourceforge.net/) {
+		      my $sf_uri1 = new URI ($download_url);
+		      $sf_uri1->path_segments (@{$paths{$_}}, $files{$arch} . "/download");
+		      push @{$uris{$arch}}, $sf_uri1;
+		      my $sf_uri2 = new URI ($download_url);
+		      $sf_uri1->path_segments (@{$paths{$_}}, $files{$arch} . "?download");
+		      push @{$uris{$arch}}, $sf_uri2;
+		  }
+		  $new_uri->path_segments (@{$paths{$_}}, $files{$arch});
+	          push @{$uris{$arch}}, $new_uri;
+              } 
+        } @paths_order;
+    }
+
+    if ($download_label eq 'Tar/GZ' and $download_url =~ /.+\/[^\/]+.tar.gz/) {
+	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
+    } elsif ($download_label eq 'Tar/GZ' and $download_url =~ /.+\/[^\/]+.tgz/) {
+	return (@{$uris{tgz}}, @{$uris{targz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
+    } elsif ($download_label eq 'Tar/GZ' and $download_url =~ /\/$/) {
+	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
+    } elsif ($download_label eq 'Tar/BZ2' and $download_url =~ /.+\/[^\/]+.tar.bz2/) {
+	return (@{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}})
+    } elsif ($download_label eq 'Tar/BZ2' and $download_url =~ /\/$/) {
+	return (@{$uris{tbz}}, @{$uris{tarbz2}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}})
+    } elsif ($download_label eq 'Zip') {
+	return (@{$uris{zip}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{original}})
+    } elsif ($download_label eq 'Download' and $download_url =~ /\/$/) {
+	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
+    } else {
+	print STDERR Dumper ($project_data);
+	print STDERR "Can't determine download type.  Download URL = $download_url\n";
+	return ();
+    }
+}
+
+sub guess_suffix {
+    my @content_types = @_;
+    print STDERR "guessing suffix for content types: (", join (":", @content_types), ")\n";
+    my $guess;
+    if (grep (/html/, @content_types)) {
+	$guess = "html";
+    }
+    print STDERR "guessing .$guess\n";
+    return $guess;
+}
+
+sub fetch_project_tarball {
+    my $request = shift;
+    print "\nWorking on $request.\n";
+
+    my ($want_project_name, $want_version) = parse_project_and_maybe_version ($request);
+    print "Looking for project $want_project_name, ", defined ($want_version)? "version $want_version\n" : "latest version\n";
+
+    my $try_project_name = $want_project_name;
+    $try_project_name =~ s/^bash$/gnubash/;
+    $try_project_name =~ s/^cdrtools$/cdrecord/;
+
+    my $project_data = get_project_data ($try_project_name);
+    return 0 if (! defined $project_data);
+    # print Dumper ($project_data);
+
+    my %releases = map { $_->{'version'} => $_; } @{$project_data->{'recent-releases'}{'recent-release'}};
+    # print Dumper (\%releases);
+
+    my $latest_version = $project_data->{'recent-releases'}{'recent-release'}[0]{'version'};
+    if (! defined $latest_version) {
+	# print Dumper $project_data;
+	print STDERR "no latest_version!\n";
+	$latest_version = "";
+    }
+    print "\$latest_version = $latest_version\n";
+
+    if (defined ($want_version)) {
+ 	if (defined $releases{$want_version}) {
+ 	    print "Found wanted version $want_version in list of recent versions.\n";
+ 	} else {
+ 	    print "Did not find wanted version $want_version in list of recent versions (", join (", ", sort keys %releases), ").\n";
+ 	}
+    } else {
+ 	$want_version = $latest_version;
+    }
+    
+    my $license_category = determine_license_category ($project_data);
+    if (! defined $license_category) {
+	print STDERR "couldn't discover license for $want_project_name, using \"DEFAULT\"\n";
+	$license_category = "DEFAULT";
+    }
+    
+    my @uris = guess_uri_for ($fm, $project_data, $want_project_name, $want_version);
+    if ($#uris < 0) {
+	print STDERR "Unable to process $request.\n";
+	return 0;
+    }
+
+    my $response;
+  TRYAGAIN:
+    foreach my $uri (@uris) {
+	print "Attempting to download $uri\n";
+	$fm->requests_redirectable (['GET']);
+	$response = $fm->get ($uri);
+	if ($response->is_success) {
+	    print STDERR "Looking for $want_project_name-$want_version in ", $response->base, "\n";
+	    if ($response->base !~ /$want_project_name-$want_version/) {
+		print STDERR "Didn't find it!\n";
+		my @content_types = $response->header ('content-type');
+		print STDERR "Looking at content-types (", join (", ", $response->header ('content-type')), ")\n";
+		if (grep (/html/, @content_types)) {
+		    print STDERR "Found HTML in content_types.\n";
+		    if ($response->content =~ /(http:.+$want_project_name-$want_version.+tar.bz2)/
+			or $response->content =~ /(http:.+$want_project_name-$want_version.+tar.tbz)/
+			or $response->content =~ /(http:.+$want_project_name-$want_version.+tar.gz)/
+			or $response->content =~ /(http:.+$want_project_name-$want_version.+tgz)/
+			or $response->content =~ /(http:.+$want_project_name-$want_version.+tar.zip)/) {
+			unshift @uris, $1;
+			goto TRYAGAIN;
+		    }
+		}
+	    }
+		
+	    goto DOWNLOADED_URI;	    
+	}
+	print STDERR "Failed download:";
+	print Dumper ($response);
+    }
+    print STDERR "Failed to download any file for $want_project_name.\n";
+    return 0;
+
+  DOWNLOADED_URI:
+    print STDERR "Successfully downloaded ", $response->base, "\n";
+
+    # $response->content("");
+    # print Dumper ($response);
+
+    my $uri = new URI ($response->base);
+    my @segments = $uri->path_segments;
+    my $filename = pop @segments;
+   
+    system_print ("/bin/mkdir", "-p", $license_category);
+
+    if (! defined ($filename) or $filename !~ /\S/) {
+	print STDERR "Undefined filename.  Winging it.\n";
+	my $suffix = guess_suffix ($response->header ('content-type'));
+	$filename = "$want_project_name-$want_version.$suffix";
+	my $fh = new FileHandle (">$license_category/" . $filename . ".debug");
+ 	$fh->print (Dumper ($response));
+	$fh->close;
+    }
+    
+    if ($filename !~ /$want_project_name/i) {
+	print STDERR "Strange filename \"$filename\".  Winging it.\n";
+	my $suffix = guess_suffix ($response->header ('content-type'));
+	$filename = "$want_project_name-$want_version.$suffix";
+	my $fh = new FileHandle (">$license_category/" . $filename . ".debug");
+ 	$fh->print (Dumper ($response));
+	$fh->close;
+    }
+
+    print STDERR "Saving $license_category/$filename.\n";
+    my $fh = new FileHandle (">$license_category/" . $filename);
+    if (defined ($fh)) {
+ 	$fh->print ($response->content);
+ 	$fh->close;
+	return 1;
+    } else {
+ 	printf STDERR "problem creating $filename: $!\n";
+	return 0;
+    }
+}
+
+sub system_print {
+    my @cmd = @_;
+    print STDERR join (" ", @cmd), "\n";
+    return system (@cmd);
+}

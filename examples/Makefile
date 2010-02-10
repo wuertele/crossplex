@@ -1,7 +1,7 @@
 # -*- makefile -*-		Stock Makefile For Crossplex Project
 
 # Where oh where can my crossplex be?
-CROSSPLEX_BUILD_INSTALL := /home/dave
+CROSSPLEX_BUILD_INSTALL := /usr/local
 
 ifeq ($(CROSSPLEX_BUILD_INSTALL),///home///dave)
   $(error To use examples, please set CROSSPLEX_BUILD_INSTALL to be the path where you installed crossplex)
@@ -16,6 +16,13 @@ BUILD_TOP := $(HOME)/build
 THIRD_PARTY      := $(shell pwd)/thirdparty
 PATCHES          := $(shell pwd)/patches
 UNPACKED_SOURCES := $(BUILD_TOP)/unpacked-sources
+
+# Fetch third-party sources
+# Comment this out in order to prevent dynamic download
+include fetch-sources.mk
+
+# Turn on automatic fetching of third-party software (by default it is disabled)
+CROSSPLEX_ALLOW_WGET := 1
 
 # Now load all the crossplex macros
 include $(CROSSPLEX_BUILD_SYSTEM)/main.mk

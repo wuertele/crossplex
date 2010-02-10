@@ -35,13 +35,15 @@ clean: unpack-clean
 # $3 = package sources dir
 # $4 = archive file postfix
 # $5 = unarchive shell command
+# $6 = archive file list command
 define General_Unpack_Rule
 
   $2/%/.unpacked: $3/%$4
 	rm -rf $$(@D) $$(@D)-unpacking
 	mkdir -p $$(@D)-unpacking
 	cd $$(@D)-unpacking && $5 $$<
-	cd `dirname $$(@D)-unpacking`; if [ -d $$(@D)-unpacking/$$(*F) ] && [ `ls $$(@D)-unpacking | wc -l` = 1 ]; then mv $$(@D)-unpacking/$$(*F) $$(@D) ; rmdir $$(@D)-unpacking; else mv $$(@D)-unpacking $$(@D); fi
+	$(if $6,cd $$(@D)-unpacking && $6 $$< | cut -f1 -d/ | sort -u | perl -e '@a=<>; if ($$$$#a==0){chomp $$$$a[0]; system("echo $$$$a[0] > .archivedirname");}' )
+	cd `dirname $$(@D)-unpacking`; if [ -d $$(@D)-unpacking/$$(*F) ] && [ `ls $$(@D)-unpacking | wc -l` = 1 ]; then mv $$(@D)-unpacking/$$(*F) $$(@D) ; rm -rf $$(@D)-unpacking; else cd $$(@D)-unpacking; if [ -f .archivedirname ]; then mv `cat .archivedirname` $$(@D); rm -rf $$(@D)-unpacking; else mv $$(@D)-unpacking $$(@D); fi; fi
 	echo crossplexwashere > $$@
 
 endef
@@ -53,10 +55,10 @@ define Unpack_Rules
 
   $1_$2_$3_DEBUG_UNPACK_RULES_ARGS := $1 , $2 , $3
 
-  $(call General_Unpack_Rule,$1,$2,$3,.tar.gz,tar xvzf)
-  $(call General_Unpack_Rule,$1,$2,$3,.tgz,tar xvzf)
-  $(call General_Unpack_Rule,$1,$2,$3,.tar.bz2,tar xvjf)
-  $(call General_Unpack_Rule,$1,$2,$3,.tbz,tar xvjf)
+  $(call General_Unpack_Rule,$1,$2,$3,.tar.gz,tar xvzf,tar tzf)
+  $(call General_Unpack_Rule,$1,$2,$3,.tgz,tar xvzf,tar tzf)
+  $(call General_Unpack_Rule,$1,$2,$3,.tar.bz2,tar xvjf,tar tjf)
+  $(call General_Unpack_Rule,$1,$2,$3,.tbz,tar xvjf,tar tjf)
 
   UNPACK_CLEAN += $2/$1
 

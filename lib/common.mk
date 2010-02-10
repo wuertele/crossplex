@@ -33,6 +33,9 @@ ifndef COMMON_MAKE_INCLUDED
 
   # What am I running on?
   HOST_TUPLE		:= $(shell echo $$MACHTYPE)
+ifeq ($(HOST_TUPLE),)
+  $(error /bin/sh does not define MACHTYPE.  Either install a /bin/sh which does (like bash) or set MACHTYPE in your top-level makefile before including crossplex)
+endif
 
   # take a list of paths from standard input, and COPY the files at those paths to equivalent paths rooted at the path in the following argument
   Cpio_Copy		:= /bin/cpio -apmdu

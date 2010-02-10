@@ -235,11 +235,15 @@ ifndef MODULE_DETAILS_LOADED
 
   gdb_SYSROOT_DEPENDENCIES = binutils linux_headers glibc gcc
 
+  gdb_TOOL_DEPENDENCIES = termcap
+
   gdb_BUILD_ENVIRONMENT  = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
   gdb_BUILD_ENVIRONMENT += CC=gcc AR=ar
+  gdb_BUILD_ENVIRONMENT += $($1_TARGETFS_BUILD_ENV)
 
   gdb_CONFIGURE_ARGS  = --prefix=/
   gdb_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  gdb_CONFIGURE_ARGS += --disable-werror
   gdb_CONFIGURE_ARGS += $(call TagCond,TARGET=%,--target=%,,$4)
   gdb_CONFIGURE_ARGS += $(call TagCond,SYSROOT=%,--with-sysroot=%,,$4)
 
@@ -252,6 +256,7 @@ ifndef MODULE_DETAILS_LOADED
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += syslinux
 
   syslinux_LICENSE := GPL
+  syslinux_TOOL_DEPENDENCIES  := nasm
   syslinux_BUILD_DEPENDENCIES := 
   syslinux_PREBUILD_STEPS     := 
   syslinux_MAKE_BUILD_OPTS    := SKIP
@@ -389,6 +394,21 @@ ifndef MODULE_DETAILS_LOADED
   syslinux_INSTALLABLE_default += usr/man/man1/syslinux.1
   syslinux_INSTALLABLE_default += usr/man/man1/syslinux2ansi.1
 
+  ## Cdrtools
+
+  CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += cdrtools
+
+  cdrtools_LICENSE := GPL
+  cdrtools_TOOL_DEPENDENCIES  := nasm
+  cdrtools_BUILD_DEPENDENCIES := 
+  cdrtools_PREBUILD_STEPS     := 
+  cdrtools_MAKE_BUILD_OPTS    := 
+  cdrtools_POSTBUILD_STEPS    := 
+  cdrtools_MAKE_INSTALL_ARGS   = install INS_BASE=/
+  cdrtools_FORCE_BUILD_TAGS   := 
+
+  cdrtools_INSTALLABLE_default += bin/mkisofs
+
   ## Pkg-config
 
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += pkg-config
@@ -489,17 +509,17 @@ ifndef MODULE_DETAILS_LOADED
   termcap_RUNTIME_DEPENDENCIES := ld libc libm
 
   termcap_BUILD_ENVIRONMENT  = $($1_TARGETFS_BUILD_ENV)
-  termcap_BUILD_ENVIRONMENT += AR="$($1_TARGETFS_TUPLE)-ar rc"
-  termcap_BUILD_ENVIRONMENT += AS=$($1_TARGETFS_TUPLE)-as
-  termcap_BUILD_ENVIRONMENT += LD=$($1_TARGETFS_TUPLE)-gcc
-  termcap_BUILD_ENVIRONMENT += NM=$($1_TARGETFS_TUPLE)-nm
-  termcap_BUILD_ENVIRONMENT += CC=$($1_TARGETFS_TUPLE)-gcc
-  termcap_BUILD_ENVIRONMENT += GCC=$($1_TARGETFS_TUPLE)-gcc
-  termcap_BUILD_ENVIRONMENT += CXX=$($1_TARGETFS_TUPLE)-g++
-  termcap_BUILD_ENVIRONMENT += STRIP=$($1_TARGETFS_TUPLE)-strip
-  termcap_BUILD_ENVIRONMENT += RANLIB=$($1_TARGETFS_TUPLE)-ranlib
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,AR="$($1_TARGETFS_TUPLE)-ar rc")
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,AS=$($1_TARGETFS_TUPLE)-as)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,LD=$($1_TARGETFS_TUPLE)-gcc)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,NM=$($1_TARGETFS_TUPLE)-nm)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,CC=$($1_TARGETFS_TUPLE)-gcc)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,GCC=$($1_TARGETFS_TUPLE)-gcc)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,CXX=$($1_TARGETFS_TUPLE)-g++)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,STRIP=$($1_TARGETFS_TUPLE)-strip)
+  termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,RANLIB=$($1_TARGETFS_TUPLE)-ranlib)
 
-  termcap_CONFIGURE_ARGS = --prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
+  termcap_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage) --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
 
   termcap_INSTALLABLE_devel += lib/libtermcap.a
   termcap_INSTALLABLE_devel += include/termcap.h
@@ -516,7 +536,7 @@ ifndef MODULE_DETAILS_LOADED
 
   zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR="$($1_TARGETFS_TUPLE)-ar rc" AS=$($1_TARGETFS_TUPLE)-as LD=$($1_TARGETFS_TUPLE)-gcc NM=$($1_TARGETFS_TUPLE)-nm CC=$($1_TARGETFS_TUPLE)-gcc GCC=$($1_TARGETFS_TUPLE)-gcc CXX=$($1_TARGETFS_TUPLE)-g++ STRIP=$($1_TARGETFS_TUPLE)-strip RANLIB=$($1_TARGETFS_TUPLE)-ranlib
 
-  zlib_CONFIGURE_ARGS = --shared --prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage
+  zlib_CONFIGURE_ARGS = --shared --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage)
 
   zlib_INSTALLABLE_minimal += lib/libz.so
   zlib_INSTALLABLE_minimal += lib/libz.so.1
@@ -980,7 +1000,7 @@ ifndef MODULE_DETAILS_LOADED
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += libxcb
   libxcb_LICENSE += REDIST_OK
   libxcb_TOOL_DEPENDENCIES := Python libtool
-  libxcb_BUILD_DEPENDENCIES := xproto pthread-stubs xcb-proto libXau libXdmcp
+  libxcb_BUILD_DEPENDENCIES := xproto pthread-stubs xcb-proto libXau libXdmcp openssl
   libxcb_INSTALLABLE_minimal += lib/libxcb.so.1.1.0
   libxcb_INSTALLABLE_minimal += lib/libxcb.so.1
   libxcb_INSTALLABLE_minimal += lib/libxcb.so
@@ -1673,6 +1693,15 @@ ifndef MODULE_DETAILS_LOADED
 
   util-linux_INSTALLABLE_minimal := 
   util-linux_INSTALLABLE_minimal += bin/mount
+
+  # nasm
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += nasm
+
+  nasm_LICENSE += REDIST_OK
+
+  nasm_INSTALLABLE_minimal := bin/nasm
+  nasm_INSTALLABLE_minimal := bin/ndisasm
 
   # fix-embedded-paths
 
