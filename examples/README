@@ -1,0 +1,9 @@
+Here is an example makefile that fetches the sources and builds a CDROM image
+that can be used to boot a vmware client.  Type "make vmware" in this
+directory.
+
+REQUIREMENTS:
+
+    /bin/sh should be linked to /bin/bash.
+    You need the wget, patch, gcc, and make programs.
+    You need the LWP::Useragent and XML::Simple perl modules.

@@ -13,7 +13,7 @@ endif
 
 FORCE ?= 0
 
-VERSION := crossplex-0.9
+VERSION := crossplex-0.9c
 
 DESTDIR ?= /usr/local
 
@@ -26,7 +26,7 @@ LIBFILES_NOFIX := $(filter-out %.in,$(shell find lib -type f))
 
 ETCFILES := MOTOROLA_README COPYING Makefile
 LIBFILES := $(patsubst lib/%,%,$(LIBFILES_NOFIX) $(LIBFILES_TOFIX))
-BINFILES := crossplex-project get-latest-sources
+BINFILES := crossplex-project freshmeat-downloader
 
 INSTALLED_LIBFILES := $(patsubst %,$(LIBDIR)/$(VERSION)/%,$(LIBFILES))
 INSTALLED_BINFILES := $(patsubst %,$(BINDIR)/%,$(BINFILES))

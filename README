@@ -1,4 +1,4 @@
-Crossplex v0.9 by David Wuertele (dave@crossplex.org)
+Crossplex v0.9b by David Wuertele (dave@crossplex.org)
 Configure, Build, and Release Embedded OS Distributions with Make
 
 ABOUT CROSSPLEX
@@ -24,7 +24,7 @@ Default usage (installs in /usr/local/lib/crossplex-1.0 and /usr/local/bin):
 
 Specify target prefix:
 
-          make install DESTDIR=/some/path
+          make install DESTDIR=/usr
 
 Specify individual lib and bin directories:
 
