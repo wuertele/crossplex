@@ -87,3 +87,8 @@ dist: ../$(VERSION).tar.bz2
 
 ../$(VERSION).tar.bz2:
 	git archive -v --format=tar --prefix=$(VERSION)/ HEAD | bzip2 - > $@
+
+checkgit:
+	rm -rf ../$(VERSION)
+	mkdir -p ../$(VERSION)
+	cd ../$(VERSION); git init; git remote add github git@github.com:wuertele/crossplex.git; git pull github master

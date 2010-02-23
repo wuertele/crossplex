@@ -10,9 +10,8 @@
 
 # Uncomment the following three lines if you are behind a web proxy.
 # Of course, make sure the URLs for the HTTP and FTP proxies are correct.
-HTTP_PROXY := "http://wwwgate0.mot.com:1080/"
-FTP_PROXY  := "http://wwwgate0.mot.com:1080/"
-DOWNLOADER_ENV := HTTP_PROXY=$(HTTP_PROXY) FTP_PROXY=$(FTP_PROXY)
+#HTTP_PROXY := "http://myproxy.com:1080/"
+#FTP_PROXY  := "http://myproxy.com:1080/"
 
 # $1 = path to package
 # $2 = URL of original file
