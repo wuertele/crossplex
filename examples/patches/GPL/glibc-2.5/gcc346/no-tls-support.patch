@@ -1,0 +1,29 @@
+--- glibc-2.5/inet/inet_ntoa.c~	2006-04-08 22:50:08.000000000 -0700
++++ glibc-2.5/inet/inet_ntoa.c	2009-06-01 10:04:48.000000000 -0700
+@@ -25,8 +25,11 @@
+ /* The interface of this function is completely stupid, it requires a
+    static buffer.  We relax this a bit in that we allow one buffer for
+    each thread.  */
++#if USE___THREAD
+ static __thread char buffer[18];
+-
++#else
++static char buffer[18];
++#endif
+ 
+ char *
+ inet_ntoa (struct in_addr in)
+--- glibc-2.5/malloc/memusage.c~	2005-10-14 14:09:34.000000000 -0700
++++ glibc-2.5/malloc/memusage.c	2009-06-01 10:27:14.000000000 -0700
+@@ -84,7 +84,11 @@
+ static memusage_cntr_t decreasing_mremap;
+ static memusage_size_t current_heap;
+ static memusage_size_t peak_use[3];
++#if USE___THREAD
+ static __thread uintptr_t start_sp;
++#else
++static uintptr_t start_sp;
++#endif
+ 
+ /* A few macros to make the source more readable.  */
+ #define peak_heap	peak_use[0]

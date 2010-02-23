@@ -1,0 +1,29 @@
+--- glibc-2.5/elf/tls-macros.h~	2005-06-17 15:57:47.000000000 -0700
++++ glibc-2.5/elf/tls-macros.h	2009-05-29 16:44:00.000000000 -0700
+@@ -285,13 +285,13 @@
+ 
+ # define TLS_LE(x) \
+   ({ int *__l;								      \
+-     asm ("call_pal 158\n\tlda $0," #x "($0)\t\t!tprel" : "=v"(__l));	      \
++     asm ("call_pal 158\n\tlda $0," #x "($0)\t\t!tprel" : "=r"(__l));	      \
+      __l; })
+ 
+ # define TLS_IE(x) \
+   ({ char *__tp; unsigned long __o;					      \
+      asm ("call_pal 158\n\tldq %1," #x "($gp)\t\t!gottprel"		      \
+-	  : "=v"(__tp), "=r"(__o) : "r"(__gp));				      \
++	  : "=r"(__tp), "=r"(__o) : "r"(__gp));				      \
+      (int *)(__tp + __o); })
+ 
+ # define TLS_LD(x) \
+--- glibc-2.5/linuxthreads/sysdeps/mips/tls.h~	2006-03-02 17:17:55.000000000 -0800
++++ glibc-2.5/linuxthreads/sysdeps/mips/tls.h	2009-06-01 09:44:23.000000000 -0700
+@@ -40,7 +40,7 @@
+ # define READ_THREAD_POINTER() \
+     ({ void *__result;							      \
+        asm volatile (".set\tpush\n\t.set\tmips32r2\n\t"			      \
+-		     "rdhwr\t%0, $29\n\t.set\tpop" : "=v" (__result));	      \
++		     "rdhwr\t%0, $29\n\t.set\tpop" : "=r" (__result));	      \
+        __result; })
+ 
+ #else /* __ASSEMBLER__ */

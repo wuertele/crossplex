@@ -1,0 +1,10 @@
+--- glibc-2.5/sysdeps/unix/sysv/linux/getcwd.c.bak	2006-04-02 10:58:28.000000000 -0700
++++ glibc-2.5/sysdeps/unix/sysv/linux/getcwd.c	2008-08-12 16:44:20.000000000 -0700
+@@ -24,6 +24,7 @@
+ #include <limits.h>
+ #include <stdlib.h>
+ #include <unistd.h>
++#include <sys/param.h>
+ 
+ #include <sysdep.h>
+ #include <sys/syscall.h>

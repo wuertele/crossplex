@@ -1,0 +1,22 @@
+--- glibc-2.5/configure~	2010-01-28 08:15:38.746767097 -0800
++++ glibc-2.5/configure	2010-01-29 01:17:44.898723629 -0800
+@@ -4044,6 +4044,8 @@
+     '') ac_prog_version="v. ?.??, bad"; ac_verc_fail=yes;;
+     2.1[3-9]*)
+        ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
++    2.20)
++       ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
+     *) ac_prog_version="$ac_prog_version, bad"; ac_verc_fail=yes;;
+ 
+   esac
+--- glibc-2.5/configure~	2006-09-29 13:18:33.000000000 -0700
++++ glibc-2.5/configure	2010-01-28 08:06:37.614742122 -0800
+@@ -4105,6 +4105,8 @@
+     '') ac_prog_version="v. ?.??, bad"; ac_verc_fail=yes;;
+     2.1[3-9]*)
+        ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
++    2.20)
++       ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
+     *) ac_prog_version="$ac_prog_version, bad"; ac_verc_fail=yes;;
+ 
+   esac

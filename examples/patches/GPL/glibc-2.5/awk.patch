@@ -1,0 +1,28 @@
+--- glibc-2.6.orig/scripts/gen-sorted.awk       2006-02-28
+07:05:57.000000000 +0000
++++ glibc-2.6/scripts/gen-sorted.awk    2007-07-20 21:03:50.000000000 +0000
+@@ -16,7 +16,7 @@
+ {
+   subdir = type = FILENAME;
+   sub(/^.*\//, "", type);
+-  sub(/\/[^/]+$/, "", subdir);
++  sub(/\/[^\/]+$/, "", subdir);
+   sub(/^.*\//, "", subdir);
+   thisdir = "";
+ }
+@@ -56,13 +56,13 @@
+     # The Subdirs file comes from an add-on that should have the subdirectory.
+     dir = FILENAME;
+     do
+-      sub(/\/[^/]+$/, "", dir);
++      sub(/\/[^\/]+$/, "", dir);
+     while (dir !~ /\/sysdeps$/);
+     sub(/\/sysdeps$/, "", dir);
+     if (system("test -d " dir "/" thisdir) == 0)
+       dir = dir "/" thisdir;
+     else {
+-      sub(/\/[^/]+$/, "", dir);
++      sub(/\/[^\/]+$/, "", dir);
+       if (system("test -d " dir "/" thisdir) == 0)
+         dir = dir "/" thisdir;
+       else {
