@@ -83,3 +83,7 @@ ifeq ($(INSTALL_OK),1)
 
 endif
 
+dist: ../$(VERSION).tar.bz2
+
+../$(VERSION).tar.bz2:
+	git archive -v --format=tar --prefix=$(VERSION)/ HEAD | bzip2 - > $@
