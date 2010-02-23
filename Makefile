@@ -85,8 +85,10 @@ endif
 
 dist: ../$(VERSION).tar.bz2
 
-../$(VERSION).tar.bz2:
+../$(VERSION).tar.bz2: FORCE
 	git archive -v --format=tar --prefix=$(VERSION)/ HEAD | bzip2 - > $@
+
+FORCE:
 
 checkgit:
 	rm -rf ../$(VERSION)
