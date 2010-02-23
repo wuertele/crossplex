@@ -21,6 +21,7 @@ if ($#ARGV >= 0) {
 }
 
 my $fm = new LWP::UserAgent;
+$fm->agent('freshmeat-download');
 my $fm_token = '81BDbCA18QG47FHBGMvK';
 
 $fm->env_proxy;
@@ -434,6 +435,15 @@ sub guess_uri_for {
     my $download_label = $project_data->{'direct-download'}{'label'};
     my $download_type = $project_data->{'direct-download'}{'type'};
 
+    if ($want_project_name eq 'linux') {
+	if ($want_version =~ /2.6/) {
+	    return new URI ("http://www.kernel.org/pub/linux/kernel/v2.6/linux-$want_version.tar.bz2");
+	}
+	if ($want_version =~ /2.4/) {
+	    return new URI ("http://www.kernel.org/pub/linux/kernel/v2.4/linux-$want_version.tar.bz2");
+	}
+    }
+
     my $uri = new URI ($download_url);
     my @segments = $uri->path_segments;
 
@@ -487,25 +497,38 @@ sub guess_uri_for {
         } @paths_order;
     }
 
-    if ($download_label eq 'Tar/GZ' and $download_url =~ /.+\/[^\/]+.tar.gz/) {
-	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
-    } elsif ($download_label eq 'Tar/GZ' and $download_url =~ /.+\/[^\/]+.tgz/) {
-	return (@{$uris{tgz}}, @{$uris{targz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
-    } elsif ($download_label eq 'Tar/GZ' and $download_url =~ /\/$/) {
-	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
-    } elsif ($download_label eq 'Tar/BZ2' and $download_url =~ /.+\/[^\/]+.tar.bz2/) {
-	return (@{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}})
-    } elsif ($download_label eq 'Tar/BZ2' and $download_url =~ /\/$/) {
-	return (@{$uris{tbz}}, @{$uris{tarbz2}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}})
-    } elsif ($download_label eq 'Zip') {
-	return (@{$uris{zip}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{original}})
-    } elsif ($download_label eq 'Download' and $download_url =~ /\/$/) {
-	return (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}})
+    my @order;
+    if ($download_label =~ /^Tar\/GZ/ and $download_url =~ /.+\/[^\/]+.tar.gz/) {
+	@order = (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Tar\/GZ/ and $download_url =~ /.+\/[^\/]+.tgz/) {
+	@order = (@{$uris{tgz}}, @{$uris{targz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Tar\/GZ/ and $download_url =~ /\/$/) {
+	@order = (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Tar\/BZ2/ and $download_url =~ /.+\/[^\/]+.tar.bz2/) {
+	@order = (@{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Tar\/BZ2/ and $download_url =~ /\/$/) {
+	@order = (@{$uris{tbz}}, @{$uris{tarbz2}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Tar\/BZ2/) {
+	@order = (@{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{zip}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Zip/) {
+	@order = (@{$uris{zip}}, @{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{original}});
+    } elsif ($download_label =~ /^Download/ and $download_url =~ /\/$/) {
+	@order = (@{$uris{targz}}, @{$uris{tgz}}, @{$uris{tarbz2}}, @{$uris{tbz}}, @{$uris{zip}}, @{$uris{original}});
     } else {
 	print STDERR Dumper ($project_data);
 	print STDERR "Can't determine download type.  Download URL = $download_url\n";
-	return $download_url;
+	@order = ($download_url);
     }
+
+    my @http_order;
+    foreach my $url (@order) { 
+	my $http_url = $url;
+	if ($http_url =~ /^ftp:/) {
+	    $http_url =~ s/^ftp:/http:/;
+	    push @http_order, $http_url;
+	}
+    }
+    return (@http_order, @order);
 }
 
 sub guess_suffix {
