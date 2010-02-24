@@ -37,7 +37,7 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/gdb-6.8.tar.gz,http://ftp.gnu.
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/libtool-2.2.4.tar.gz,http://ftp.gnu.org/gnu/libtool/libtool-2.2.4.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/pkg-config-0.23.tar.gz,http://pkg-config.freedesktop.org/releases/pkg-config-0.23.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/syslinux-3.83.tar.gz,ftp://ftp.kernel.org/pub/linux/utils/boot/syslinux/syslinux-3.83.tar.gz))
-$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/termcap-1.3.1.tar.gz,ftp://ftp.gnu.org/gnu/termcap/termcap-1.3.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/termcap-1.3.1.tar.gz,ftp://ftp.gnu.org/gnu/termcap/termcap-1.3.1.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/nasm-2.07.tar.gz,http://www.nasm.us/pub/nasm/releasebuilds/2.07/nasm-2.07.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/cdrtools-2.01.01a75.tar.gz,ftp://ftp.berlios.de/pub/cdrecord/alpha/cdrtools-2.01.01a75.tar.gz))
 
