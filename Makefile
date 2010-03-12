@@ -13,7 +13,7 @@ endif
 
 FORCE ?= 0
 
-VERSION := crossplex-0.10.0
+VERSION := crossplex-0.10.1
 
 DESTDIR ?= /usr/local
 

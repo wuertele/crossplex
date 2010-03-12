@@ -70,8 +70,8 @@ endef
 # $3 = package patch dir (e.g. "/some/other/path/to/patched-sources/dropbear-0.48.1")
 define Patch_Rules_Core
 
-    $1_$2_$3_UNIQUE_PATCH_RULES_CORE_ARGS := $1 , $2 , $3
-    $3_PATCH_DIRS_SEARCHED := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1)
+    $(subst $(__crossplex_space),_,$1_$2_$3_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3
+    $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1)
 
     # Rule that actually enumerates and applies all patches found in the given directory, and copies the patch to an ".applied-*" state file
     # Note that this is just the rule for applying patches individually.  See the commands for patchorder.mk for the whole series.
@@ -86,7 +86,7 @@ define Patch_Rules_Core
     # This is a system of unrolling patches.  It depends on $3/patchorder.mk properly ordering the unroll.
     # This rule is ONLY invoked when called on a single .unapplied-XYZ file, which is ONLY done in the rule defined six lines up (for $3/.applied).
     $(patsubst $1/%.patch,$3/.unapplied-%,$(wildcard $1/*.patch)): $3/.unapplied-%: $1/%.patch
-	cd $$(@D) && patch --reverse -g 0 -f -p1 < $$<
+	cd $$(@D) && patch --reverse -g 0 -f -p1 < $$(@D)/.applied-$$(*F)
 	cp -f $$< $$@
 	rm -f $$(@D)/.applied-$$(*F)
 
@@ -101,7 +101,7 @@ define Patch_Rules_Core
     # Note that there might be other patches found by other invocations of this macro, so this dependency is cumulative.
     $3/patchorder.mk: $(wildcard $1/*.patch)
 
-    $1_$2_$3_NEW_OVERLAY_TARGETS := $$(filter-out $$(SEEN_OVERLAY_TARGETS),$(patsubst $1/overlay/%,$3/%,$(shell find $1/overlay -type f -o -type l 2>/dev/null)))
+    $(subst $(__crossplex_space),_,$1_$2_$3_NEW_OVERLAY_TARGETS) := $$(filter-out $$(SEEN_OVERLAY_TARGETS),$(patsubst $1/overlay/%,$3/%,$(shell find $1/overlay -type f -o -type l 2>/dev/null)))
 
     # Here is the rule for overlaying the build-config files, if any are found
     $$($1_$2_$3_NEW_OVERLAY_TARGETS): $3/%: $1/overlay/% $3/.repliduplicated
@@ -120,8 +120,8 @@ endef
 # $5 = list of patch subdirs to check
 define Patch_Rules
 
-  ifndef $1_$2_$3_$4_UNIQUE_PATCH_ARGS
-    $1_$2_$3_$4_UNIQUE_PATCH_ARGS := $1 , $2 , $3 , $4 , $5
+  ifndef $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS)
+    $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS) := $1 , $2 , $3 , $4 , $5
 
     $3/.repliduplicated: $2/.unpacked
     ifeq ($2,$3)
@@ -131,10 +131,10 @@ define Patch_Rules
 	touch $$@
     endif
 
-    $1_$2_$3_$4_$5_replidupliclean:
+    $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean):
 	rm -rf $3
 
-    sourceclean: $1_$2_$3_$4_$5_replidupliclean
+    sourceclean: $1_$2_$3_$4_$(subst $(__crossplex_space),_,$5)_replidupliclean
 
     $(call Patch_Rules_Core,$4/$1,$2,$3)
     $(foreach subdir,$5,$(call Patch_Rules_Core,$4/$1/$(subdir),$2,$3))
