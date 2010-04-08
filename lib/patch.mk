@@ -59,6 +59,7 @@ define Unpack_Rules
   $(call General_Unpack_Rule,$1,$2,$3,.tgz,tar xvzf,tar tzf)
   $(call General_Unpack_Rule,$1,$2,$3,.tar.bz2,tar xvjf,tar tjf)
   $(call General_Unpack_Rule,$1,$2,$3,.tbz,tar xvjf,tar tjf)
+  $(call General_Unpack_Rule,$1,$2,$3,.zip,unzip)
 
   UNPACK_CLEAN += $2/$1
 
@@ -78,7 +79,7 @@ define Patch_Rules_Core
     # Note^2: this checks whether the patch has already been applied, and calls make to unwind this patch and its dependents before re-applying
     $(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)): $3/.applied-%: $1/%.patch $3/.repliduplicated
 	# Check for a preexisting .applied- file, and unroll it and its dependents if necessary
-	+if [ -f $$@ ] ; then $(MAKE) $$(@D)/.unapplied-$$(*F) ; fi
+	+if [ -f $$@ ] ; then $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $$(@D)/.unapplied-$$(*F) ; fi
 	cd $$(@D) && patch -g 0 -f -p1 < $$<
 	cp -f $$< $$@
 	rm -f $$(@D)/.unapplied-$$(*F)

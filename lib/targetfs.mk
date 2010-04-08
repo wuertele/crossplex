@@ -18,6 +18,52 @@
 #    along with Crossplex.  If not, see <http://www.gnu.org/licenses/>.
 
 
+# A few words about how Crossplex organizes builds
+#
+# The central object in Crossplex is the "TargetFS".  A TargetFS is a
+# directory structure in which all building is done.  A build usually
+# consists of multiple intermediate TargetFSes that cumulate in one or
+# more final TargetFSes that get "kitted" into a deployable object.
+# There is no distinction between an intermediate TargetFS and a final
+# one other than that a developer chooses one of the TargetFSes to
+# deploy.
+#
+# A TargetFS has:
+#
+# 1.  a NAME, which is also used as the path (relative to BUILD_TOP)
+#     of the TargetFS root (or "prefix" in autoconf terms)
+#
+# 2.  a PATH, which is an arbitrary list of TargetFS bin directories
+#     to search for build tools, and optionally a host path
+#
+# 3.  a list of TAGS, which are interpreted by rules that install
+#     files in that TargetFS
+#
+# A TargetFS might be intended for deploying on a target, it might be
+# intended as an intermediate step in a build, it might be both.  The
+# semantics of any given TargetFS are not known to the TargetFS.
+#
+# A TargetFS can be used to assemble a host environment used to
+# insulate a build from the actual host's environment.  This is how
+# Crossplex can acheive builds that are completely specified by
+# sources.  That means the deployable object is bit identical no
+# matter where or when it was compiled.  I know of no other build
+# system that can acheive this goal.
+#
+# TargetFSes can be grouped according to the path used in their names
+# (i.e. their roots are sibling directories).  Grouping enables
+# sharing of intermediate objects.  In order for two TargetFSes to
+# share intermediate objects, their roots must be sibling directories,
+# their PATH and their list of TAGS must be identical, and they must
+# specify software packages with similar configurations.  Crossplex
+# allows you to leverage commonality between platforms in your build
+# while guaranteeing correctness.
+#
+# Since a TargetFS can search other TargetFSes for build tools, it was
+# natural to create a toolchain builder that uses TargetFSes as
+# sysroots.
+
+
 ifndef Configure_TargetFS
 
   MKNOD := /bin/mknod

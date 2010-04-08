@@ -146,21 +146,21 @@ ifndef Configure_Kernel
 
     $3/$2-build/.htmldocs: $$($3/$2_SOURCE_PREPARED) $(12)
 	mkdir -p $$(@D)
-	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) htmldocs
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) htmldocs
 
     $1_KERNEL_FILENAME := $3/$2-build/vmlinux
 
      $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
-	+ yes "" | $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
-	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS)
-	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
-	+ $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS)
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
 
      $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7
-	+ yes "" | $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
-	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) bzImage
-	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
-	+ $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+	+ yes "" | PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) bzImage
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
 
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
