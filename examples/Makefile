@@ -7,7 +7,7 @@ ifeq ($(CROSSPLEX_BUILD_INSTALL),///home///dave)
   $(error To use examples, please set CROSSPLEX_BUILD_INSTALL to be the path where you installed crossplex)
 endif
 
-CROSSPLEX_BUILD_SYSTEM := $(CROSSPLEX_BUILD_INSTALL)/lib/crossplex-0.10.2
+CROSSPLEX_BUILD_SYSTEM := $(CROSSPLEX_BUILD_INSTALL)/lib/crossplex-0.11.0
 
 # Where oh where can I build my stuff?
 # This path can be absolute or relative, but DON'T USE ENVIRONMENT VARIABLES!!
