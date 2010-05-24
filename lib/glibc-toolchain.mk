@@ -171,8 +171,8 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
   # $7 = patch tags
   define Glibc_Toolchain
 
-    $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5))
-    $(foreach sysroot,gcc-core-noshared glibc-headers glibc-startfiles glibc-final gcc-core-withshared-libgcc gcc-final gdb,$(eval $(call Configure_TargetFS,$2/$(sysroot)-sysroot,$1,$5)))
+    $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5,,$3))
+    $(foreach sysroot,gcc-core-noshared glibc-headers glibc-startfiles glibc-final gcc-core-withshared-libgcc gcc-final gdb,$(eval $(call Configure_TargetFS,$2/$(sysroot)-sysroot,$1,$5,,$3)))
 
     # GCC Core (no shared libs) build depends on kernel headers and binutils
     $(eval $(call INSTALL_BINUTILS,$2,gcc-core-noshared-sysroot,$4,$3,$6,$7))
@@ -210,7 +210,6 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
     $2/toolchain_RUNTIMES  += glibc
     $2/toolchain_TOOLCHAIN += glibc
-    $2/toolchain_TOOLCHAIN_TARGET_TUPLE = $3
 
     $2_TOOLCHAIN_TARGETS = $($2/toolchain_TARGETFS_TARGETS)
 
@@ -242,11 +241,10 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
   # $5 = path code (UNIMPLEMENTED)
   define Glibc_Prebuilt_Toolchain
 
-    $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5))
+    $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5,,$3))
 
     $2/toolchain_RUNTIMES  += glibc
     $2/toolchain_TOOLCHAIN += glibc
-    $2/toolchain_TOOLCHAIN_TARGET_TUPLE = $3
 
     $2_TOOLCHAIN_TARGETS = $(patsubst $4/%,$($2/toolchain_TARGETFS_PREFIX)/%,$(foreach dirname,bin include lib share $3 libexec usr,$(wildcard $4/$(dirname))))
 

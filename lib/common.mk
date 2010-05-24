@@ -43,17 +43,19 @@ endif
   # take a list of paths from standard input, and LINK the files at those paths to equivalent paths rooted at the path in the following argument
   Cpio_Link		:= /bin/cpio -aplmdu
 
+  STAT := $(shell which stat)
+
   # Copy or Link a single file named $2 from directory $1 to directory $3.  If the device hosting directory $1 matches that for directory $3, use link, otherwise use copy.
   # $1 = source directory
   # $2 = source file
   # $3 = target directory
-  Cpio_DupOne	= mkdir -p $3; if [ x`stat --format=%D $1` = x`stat --format=%D $3` ]; then pushd $1 && echo $2 | $(Cpio_Link) $3 && popd ; else pushd $1 && echo $2 | $(Cpio_Copy) $3 && popd ; fi
+  Cpio_DupOne	= mkdir -p $3; if [ ! -z $(STAT) ] && [ -x $(STAT) ] && [ -e $1 ] && [ -e $3 ] && [ x`$(STAT) --format=%D $1` = x`$(STAT) --format=%D $3` ]; then pushd $1 && ( ( echo $2 | $(Cpio_Link) $3 ) || ( echo $2 | $(Cpio_Copy) $3 ) )  && popd ; else pushd $1 && echo $2 | $(Cpio_Copy) $3 && popd ; fi
 
   # If a source file is a softlink, dup any of its targets which have not already been duped, then dup the source
   # $1 = source directory
   # $2 = source file
   # $3 = target directory
-  Cpio_DupOne_WithLinks = function duptargets { if [ -L $$1/$$2 ]; then t=`readlink $$1/$$2`; td=`dirname $$t`; duptargets $$1/$$td $$t $$3/$$td; fi; mkdir -p $$3; if [ x`stat --format=%D $$1` = x`stat --format=%D $$3` ]; then echo hardlinking $$1/$$2 to $$3 && pushd $$1 && echo $$2 | cpio -aplmdu $$3 && popd; else echo copying $$1/$$2 to $$3 && pushd $$1 && echo $$2 | cpio -apmdu $$3 && popd ; fi }; mkdir -p $1; pushd $1; asd=`pwd`; popd; mkdir -p $3; pushd $3; atd=`pwd`; popd; duptargets $$asd $2 $$atd
+  Cpio_DupOne_WithLinks = function duptargets { if [ -L $$1/$$2 ]; then t=`readlink $$1/$$2`; td=`dirname $$t`; duptargets $$1/$$td $$t $$3/$$td; fi; mkdir -p $$3; if [ ! -z $(STAT) ] && [ -x $(STAT) ] && [ -e $1 ] && [ -e $3 ] && [ x`$(STAT) --format=%D $$1` = x`$(STAT) --format=%D $$3` ]; then echo hardlinking $$1/$$2 to $$3 && pushd $$1 && ( ( echo $$2 | cpio -aplmdu $$3 ) || ( echo $$2 | cpio -apmdu $$3 ) ) && popd; else echo copying $$1/$$2 to $$3 && pushd $$1 && echo $$2 | cpio -apmdu $$3 && popd ; fi }; mkdir -p $1; pushd $1; asd=`pwd`; popd; mkdir -p $3; pushd $3; atd=`pwd`; popd; duptargets $$asd $2 $$atd
 
   # cd to directory $1 and LINK every file found under that directory to an equivalent path rooted at direcory $2
   Cpio_Findlink = if [ -d $1 ]; then cd $1 && find . | $(Cpio_Link) $2; fi

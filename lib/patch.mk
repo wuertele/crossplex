@@ -128,6 +128,7 @@ define Patch_Rules
     ifeq ($2,$3)
 	cp -f $$< $$@
     else
+	rm -rf $$(@D)
 	$(call Cpio_Findup,$2,$3)
 	touch $$@
     endif
@@ -157,6 +158,7 @@ define Patch_Rules
     ifeq ($2,$3-compare)
 	cp -f $$< $$@
     else
+	rm -rf $$(@D)
 	$(call Cpio_Findup,$2,$3-compare)
 	touch $$@
     endif

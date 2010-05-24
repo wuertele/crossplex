@@ -46,8 +46,9 @@ endif
 # How to build target filesystems
 include $(CROSSPLEX_BUILD_SYSTEM)/targetfs.mk
 
-# How to build glibc toolchains
+# How to build toolchains
 include $(CROSSPLEX_BUILD_SYSTEM)/glibc-toolchain.mk
+include $(CROSSPLEX_BUILD_SYSTEM)/uclibc-toolchain.mk
 
 # How to build toolchains and kernels from source
 include $(CROSSPLEX_BUILD_SYSTEM)/linux-kernel.mk

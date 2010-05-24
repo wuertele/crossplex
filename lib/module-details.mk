@@ -36,8 +36,8 @@ ifndef MODULE_DETAILS_LOADED
 
   binutils_LICENSE := GPL
 
-  binutils_CONFIGURE_ARGS =  --prefix=/ --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
-  binutils_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)))
+  binutils_CONFIGURE_ARGS =  --prefix=/ --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
+  binutils_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)),--target=$($1_TARGETFS_TUPLE))
   binutils_CONFIGURE_ARGS += --disable-nls
   binutils_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
 
@@ -80,9 +80,14 @@ ifndef MODULE_DETAILS_LOADED
 
   gcc_enable_c_and_cplusplus := --enable-languages=c,c++
 
+  GCC_ARCHMAP_mips1  := mipsel-%-linux-uclibc
+
+  Gcc_Arch = $(sort $(foreach arch,$(patsubst GCC_ARCHMAP_%,%,$(filter GCC_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(GCC_ARCHMAP_$(arch)),$1),$(arch))))
+
   gcc_CONFIGURE_ARGS  = --prefix=/
-  gcc_CONFIGURE_ARGS += --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
-  gcc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4))) 
+  gcc_CONFIGURE_ARGS += --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
+  gcc_CONFIGURE_ARGS += $(if $(call Gcc_Arch,$($1_TARGETFS_TUPLE)),--with-arch=$(call Gcc_Arch,$($1_TARGETFS_TUPLE)))
+  gcc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)),--target=$($1_TARGETFS_TUPLE))
   gcc_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
   gcc_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-local-prefix=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))   # remove /usr/local/include from gcc's include search path (http://gcc.gnu.org/PR10532)
   gcc_CONFIGURE_ARGS += $(call TagCond,MAKEARGS=stage3,$(gcc_enable_c_and_cplusplus),--enable-languages=c,$4)
@@ -121,14 +126,17 @@ ifndef MODULE_DETAILS_LOADED
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-build-libiberty 
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-libiberty 
 
-  gcc_MAKE_ARGS  = $(call TagSubst,MAKEARGS=stage1,all-gcc,$2)
+  gcc_MAKE_ARGS  = $(call TagSubst,MAKEARGS=stage1,all-gcc all-target-libgcc,$2)
   gcc_MAKE_ARGS += $(call TagSubst,MAKEARGS=stage2,$(if $(filter gcc-4.%,$3),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC4),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC3)),$2)
-  gcc_MAKE_ARGS += $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2)
 
-  gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2),$2)
+# remove build_dir argument
+#  gcc_MAKE_ARGS += $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2)
+#  gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2),$2)
 
-  gcc_MAKE_INSTALL_ARGS  = $(call TagSubst,MAKEARGS=stage1,install-gcc,$2)
-  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage2,install-gcc,$2)
+  gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc,$2)
+
+  gcc_MAKE_INSTALL_ARGS  = $(call TagSubst,MAKEARGS=stage1,install-gcc install-target-libgcc,$2)
+  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage2,install-gcc install-target-libgcc,$2)
   gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage3,install,$2)
 
   ## glibc-ports
@@ -159,7 +167,7 @@ ifndef MODULE_DETAILS_LOADED
 
   glibc_CONFIGURE_ARGS  = --prefix=/usr
   glibc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
-  glibc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4))) 
+  glibc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
   glibc_CONFIGURE_ARGS += --without-cvs            # ? from crosstool.sh
   glibc_CONFIGURE_ARGS += --disable-sanity-checks # ? from crosstool.sh
   glibc_CONFIGURE_ARGS += $(patsubst SYSROOT=%,--with-headers=$$(%_TARGETFS_PREFIX)/usr/include,$(filter SYSROOT=%,$4))
@@ -226,6 +234,30 @@ ifndef MODULE_DETAILS_LOADED
 
   glibc_POST_INSTALL_STEPS += $(call TagSubst,NEEDSEMH,mkdir -p $5/usr/include && cp $3/linuxthreads/semaphore.h $5/usr/include; ,$2)
 
+
+  ## uclibc
+
+  CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += uClibc
+
+  uClibc_LICENSE := LGPL
+
+  uClibc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
+
+  uClibc_MAKE_ARGS_step1 += V=1
+  uClibc_MAKE_ARGS_step1 += $(call TagSubst,MAKEARGS=headers,oldconfig,$2)
+  uClibc_MAKE_ARGS_step1 += $(call TagSubst,MAKEARGS=final,CROSS=$($1_TARGETFS_TUPLE)-,$2)
+  uClibc_MAKE_ARGS_step1 += $(if $(filter SYSROOT=%,$2),KERNEL_HEADERS=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$2))/usr/include)
+
+  uClibc_MAKE_ARGS_step2 += V=1
+  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=headers,headers,$2)
+  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=final,utils hostutils CROSS=$($1_TARGETFS_TUPLE)-,$2)
+  uClibc_MAKE_ARGS_step2 += $(if $(filter SYSROOT=%,$2),KERNEL_HEADERS=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$2))/usr/include)
+
+  uClibc_MAKE_INSTALL_ARGS += V=1
+  uClibc_MAKE_INSTALL_ARGS += PREFIX=$3
+  uClibc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=headers,install_headers,$2)
+  uClibc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=final,install install_utils CROSS=$($1_TARGETFS_TUPLE)-,$2)
+  uClibc_MAKE_INSTALL_ARGS += $(if $(filter SYSROOT=%,$2),KERNEL_HEADERS=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$2))/usr/include)
 
   ## GDB
 
@@ -1860,7 +1892,6 @@ ifndef MODULE_DETAILS_LOADED
   busybox_INSTALLABLE_BASIC += bin/whoami
   busybox_INSTALLABLE_BASIC += bin/md5sum
   busybox_INSTALLABLE_BASIC += bin/ed
-  busybox_INSTALLABLE_BASIC += bin/loadfont
   busybox_INSTALLABLE_BASIC += bin/lsattr
   busybox_INSTALLABLE_BASIC += bin/diff
   busybox_INSTALLABLE_BASIC += bin/uuencode
@@ -2099,7 +2130,6 @@ ifndef MODULE_DETAILS_LOADED
   busybox_INSTALLABLE_NOUTIL += bin/whoami
   busybox_INSTALLABLE_NOUTIL += bin/md5sum
   busybox_INSTALLABLE_NOUTIL += bin/ed
-  busybox_INSTALLABLE_NOUTIL += bin/loadfont
   busybox_INSTALLABLE_NOUTIL += bin/lsattr
   busybox_INSTALLABLE_NOUTIL += bin/diff
   busybox_INSTALLABLE_NOUTIL += bin/uuencode

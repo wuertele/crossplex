@@ -110,6 +110,7 @@ ifndef Configure_TargetFS
   # $2 = build top (eg "/path/to/build-top")
   # $3 = path code (eg "mipsel-glibc/toolchain host/tools PATH")
   # $4 = optional default install tags
+  # $5 = optional toolchain target tuple
   define Configure_TargetFS
 
     $(if $($1_Configure_TargetFS_Args),$(error Called Configure_TargetFS with non-unique name $1))
@@ -142,9 +143,11 @@ ifndef Configure_TargetFS
 
     $1_TARGETFS_TOOLCHAIN_TARGETS := $($(call TargetFS_Search_Definer,$3,TOOLCHAIN)_TARGETFS_TARGETS)
 
-    $1_TARGETFS_TUPLE             := $(or $(call TargetFS_Search_Definition,$3,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE))
+    $1_TARGETFS_TUPLE             := $(or $(call TargetFS_Search_Definition,$3,TOOLCHAIN_TARGET_TUPLE),$5,$(HOST_TUPLE))
 
     $1_TARGETFS_DEFAULT_INSTALL_TAGS += $4
+
+    $(if $5,$1_TOOLCHAIN_TARGET_TUPLE := $5)
 
     $$($1_TARGETFS_PREFIX)/dev/loop0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ b 7 0
     $$($1_TARGETFS_PREFIX)/dev/tty:     ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 0
@@ -387,7 +390,10 @@ endef
 	$(if $5,$5,@echo no pre-configure steps)
 	$(if $6,cd $3 && env -i $($1_TARGETFS_BUILD_ENV) $($2_AUTORECONF_ENV) autoreconf -v --install --force,@echo skipping autoreconf)
 	$(if $(filter NOCONFIGURE,$8),@echo skipping configure,cd $$(@D) && env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $3/configure $(if $7,$7,$$($3$4_CONFIGURE_OPTS)))
-	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) $(call $2_MAKE_ARGS,$1,$8,$9)
+	$(if $(filter $2_MAKE_ARGS%,$(.VARIABLES)),,
+	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D))
+	$(foreach arglist,$(filter $2_MAKE_ARGS%,$(.VARIABLES)),
+	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) $(call $(arglist),$1,$8,$9))
 	$(call $2_POST_BUILD_STEPS,$1,$8,$3,$4,$9)
 	mv $$(@D)/.building $$@
 	touch $$@

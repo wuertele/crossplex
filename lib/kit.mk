@@ -110,6 +110,8 @@ ifndef Magic_Tarball_Kit
 	rm -f $$@
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
 
+    $1_NFS_KIT_TARGETS := $(patsubst $($3_TARGETFS_PREFIX)/%,$4/kit-$1/rootfs/%,$($3_TARGETFS_TARGETS))
+
   endef
 
   # $1 = unique kit name (eg. "my-super-duper-kit")
