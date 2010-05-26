@@ -51,17 +51,20 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
   UCLIBC_LIBRARIES_VS1ulaSp += libthread_db
 
 # lib/$(LIB).so, lib/$(LIB).so.0, lib/$(LIB).so.0.0.0, lib/$(LIB).a, lib/$(LIB).la
-  UCLIBC_LIBRARIES_S000ala += libmudflap #
+  UCLIBC_LIBRARIES_S000ala += libmudflap
   UCLIBC_LIBRARIES_S000ala += libmudflapth
 
 # lib/$(LIB).so, lib/$(LIB).so.0, lib/$(LIB).so.0.0.0, lib/$(LIB).a, lib/$(LIB).la, lib/$(LIB)_nonshared.a lib/$(LIB)_nonshared.la
-  UCLIBC_LIBRARIES_S000alasns += libssp
+# not built yet
+#  UCLIBC_LIBRARIES_S000alasns += libssp
 
 # lib/$(LIB).so, lib/$(LIB).so.1, lib/$(LIB).so.1.0.0, lib/$(LIB).a, lib/$(LIB).la, lib/$(LIB).spec
-  UCLIBC_LIBRARIES_S100 += libgomp
+# not built yet
+#  UCLIBC_LIBRARIES_S100 += libgomp
 
 # lib/$(LIB).so, lib/$(LIB).so.3, lib/$(LIB).so.3.0.0, lib/$(LIB).a, lib/$(LIB).la
-  UCLIBC_LIBRARIES_S300 += libgfortran
+# not built yet
+#  UCLIBC_LIBRARIES_S300 += libgfortran
 
 # lib/$(LIB).so, lib/$(LIB).so.6, lib/$(LIB).so.6.0.0, lib/$(LIB).a, lib/$(LIB).la, lib/$(LIB)_pic.a
   UCLIBC_LIBRARIES_S600p += libstdc++
@@ -70,16 +73,25 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
   UCLIBC_LIBRARIES_S1 += libgcc_s
 
 # usr/lib/$(LIB)-2.19.1.so, usr/lib/$(LIB).a, usr/lib/$(LIB).la, usr/lib/$(LIB).so
-  UCLIBC_LIBRARIES_bfd += libbfd
+# only .a files built, but not installed yet
+#  UCLIBC_LIBRARIES_bfd += libbfd
 
 # usr/lib/$(LIB).a, usr/lib/$(LIB).la
-  UCLIBC_LIBRARIES_ulala += libgmp, libmp, libmpfr
+# not built yet
+#  UCLIBC_LIBRARIES_ulala += libgmp
+#  UCLIBC_LIBRARIES_ulala += libmp
+#  UCLIBC_LIBRARIES_ulala += libmpfr
 
 # usr/lib/$(LIB).a, usr/lib/$(LIB).so
-  UCLIBC_LIBRARIES_ulaso += libdmalloc, libdmallocth, libdmallocthcxx, libdmallocxx
+# not built yet
+#  UCLIBC_LIBRARIES_ulaso += libdmalloc
+#  UCLIBC_LIBRARIES_ulaso += libdmallocth
+#  UCLIBC_LIBRARIES_ulaso += libdmallocthcxx
+#  UCLIBC_LIBRARIES_ulaso += libdmallocxx
 
 # usr/lib/$(LIB).a, usr/lib/$(LIB).so, usr/lib/$(LIB).so.0.0.0
-  UCLIBC_LIBRARIES_ulaso000 += libduma
+# not built yet
+#  UCLIBC_LIBRARIES_ulaso000 += libduma
 
 # usr/lib/$(LIB).o (NPTL STARTFILES ONLY)
   UCLIBC_STARTFILES_UO += crt1
@@ -187,17 +199,20 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
     # If a module calls out one of these component libraries as a runtime dependency, the module's TargetFS should know how to copy it from here
     $(foreach library_name,$(UCLIBC_LIBRARIES_LIBC) $(UCLIBC_LIBRARIES_VS0) $(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_VS1ulaSp) $(UCLIBC_LIBRARIES_0UAS),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-$(patsubst uClibc-%,%,$(filter uClibc-%,$4)).so))
     $(foreach library_name,$(UCLIBC_LIBRARIES_LIBC),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/libc.so.0))
-       $(foreach library_name,$(UCLIBC_LIBRARIES_VS0) $(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns) $(UCLIBC_LIBRARIES_0UAS),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_VS0) $(UCLIBC_LIBRARIES_VS0ulaSp)  $(UCLIBC_LIBRARIES_0UAS),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_VS1ulaSp),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1))
     $(foreach library_name,$(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_VS1ulaSp) $(UCLIBC_LIBRARIES_bfd) $(UCLIBC_LIBRARIES_ulaso) $(UCLIBC_LIBRARIES_ulaso000) $(UCLIBC_LIBRARIES_0UAS) ,$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),usr/lib/$(library_name).so))
-      $(foreach library_name,$(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.0.0.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.0.0.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_ulaso000),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),usr/lib/$(library_name).so.0.0.0))
-      $(foreach library_name,$(UCLIBC_LIBRARIES_S100),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1.0.0))
-      $(foreach library_name,$(UCLIBC_LIBRARIES_S300),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.3.0.0))
-     $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.6.0.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S100),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1.0.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S300),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.3.0.0))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.6.0.10))
     $(foreach library_name,$(UCLIBC_LIBRARIES_bfd),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-2.19.1.so))
 
-        $(foreach library_name,$(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_VS1ulaSp) $(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns) $(UCLIBC_LIBRARIES_S100) $(UCLIBC_LIBRARIES_S300) $(UCLIBC_LIBRARIES_S600p) $(UCLIBC_LIBRARIES_bfd) $(UCLIBC_LIBRARIES_ulala) $(UCLIBC_LIBRARIES_ulaso) $(UCLIBC_LIBRARIES_ulaso000) $(UCLIBC_LIBRARIES_0UAS) ,$(call Uclibc_Sub_Lib_Depends_Devel,$2/toolchain,$(library_name),usr/lib/$(library_name).a))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_VS1ulaSp) $(UCLIBC_LIBRARIES_S100) $(UCLIBC_LIBRARIES_S300) $(UCLIBC_LIBRARIES_bfd) $(UCLIBC_LIBRARIES_ulala) $(UCLIBC_LIBRARIES_ulaso) $(UCLIBC_LIBRARIES_ulaso000) $(UCLIBC_LIBRARIES_0UAS) ,$(call Uclibc_Sub_Lib_Depends_Devel,$2/toolchain,$(library_name),usr/lib/$(library_name).a))
+
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns) $(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends_Devel,$2/toolchain,$(library_name),$3/lib/$(library_name).a))
 
     # TODO:  add inter-library dependencies for the above component libraries
 
