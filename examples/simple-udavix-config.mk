@@ -37,8 +37,8 @@ UDAVIX_KERNEL_INITRAMFS_ROOT := $(call Targetfs_Prefix_Of,$(UDAVIX_INITRAMFS_TAR
 
 UDAVIX_KERNEL_DEPENDENCIES   := $(call Complete_Targetfs_Target_List,$(UDAVIX_INITRAMFS_TARGETFS_NAME)) | $(sort $(dir $(call Complete_Targetfs_Target_List,$(UDAVIX_INITRAMFS_TARGETFS_NAME))))
 
-UDAVIX_LINUX_VERSION := linux-2.6.31
+UDAVIX_LINUX_VERSION := linux-2.6.31.12
 
-$(eval $(call Build_Linux_Kernel,udavix/linux,$(UDAVIX_LINUX_VERSION),$(BUILD_TOP),$(UDAVIX_KERNEL_INITRAMFS_ROOT),,$(UDAVIX_KERNEL_DEPENDENCIES),localhost/ubuild-tools davix-uclibc/toolchain PATH,,,broadcom motocap))
+$(eval $(call Build_Linux_Kernel,udavix/linux,$(UDAVIX_LINUX_VERSION),$(BUILD_TOP),$(UDAVIX_KERNEL_INITRAMFS_ROOT),,$(UDAVIX_KERNEL_DEPENDENCIES),localhost/ubuild-tools davix-uclibc/toolchain PATH,,,udavixtc-mips))
 
-uvmware: udavix/linux-kernel-compressed-image
+udlinux: udavix/linux-kernel-compressed-image
