@@ -126,7 +126,8 @@ ifndef MODULE_DETAILS_LOADED
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-build-libiberty 
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-libiberty 
 
-  gcc_MAKE_ARGS  = $(call TagSubst,MAKEARGS=stage1,all-gcc all-target-libgcc,$2)
+  gcc_MAKE_ARGS  = $(call TagSubst,MAKEARGS=stage1,all-gcc,$2)
+  gcc_MAKE_ARGS += $(call TagSubst,ALLTARGETLIBGCC,all-target-libgcc,$2)
   gcc_MAKE_ARGS += $(call TagSubst,MAKEARGS=stage2,$(if $(filter gcc-4.%,$3),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC4),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC3)),$2)
 
 # remove build_dir argument
@@ -135,8 +136,9 @@ ifndef MODULE_DETAILS_LOADED
 
   gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc,$2)
 
-  gcc_MAKE_INSTALL_ARGS  = $(call TagSubst,MAKEARGS=stage1,install-gcc install-target-libgcc,$2)
-  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage2,install-gcc install-target-libgcc,$2)
+  gcc_MAKE_INSTALL_ARGS  = $(call TagSubst,MAKEARGS=stage1,install-gcc,$2)
+  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,ALLTARGETLIBGCC,install-target-libgcc,$2)
+  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage2,install-gcc,$2)
   gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage3,install,$2)
 
   ## glibc-ports

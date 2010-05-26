@@ -421,11 +421,10 @@ endef
 
       $3$4/$5: $3$4/.built
 	mkdir -p $$(@D)
-	touch $$@-in-progress
 	$(call Cpio_Findup,$3$4,$3$4$5)
 	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $(call $2_BUILD_ENVIRONMENT,$1,$8),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $3$4$5 $(if $(call $2_MAKE_INSTALL_ARGS,$1,$8,$6),$(call $2_MAKE_INSTALL_ARGS,$1,$8,$6),install) $(call TagCond,NODESTDIR,,DESTDIR=$6,$8)
 	$(call $2_POST_INSTALL_STEPS,$1,$8,$3,$4$5,$6)
-	mv $$@-in-progress $$@
+	touch $$@
 
       ,
 

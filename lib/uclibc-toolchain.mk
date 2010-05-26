@@ -136,7 +136,7 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
   INSTALL_KERNEL_HEADERS    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
   INSTALL_BINUTILS          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
   INSTALL_UCLIBC_HEADERS    = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-headers-sysroot MAKEARGS=headers ENV=-i $5 ,,$6)
-  INSTALL_GCC_CORE_STATIC   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED SYSROOT=$1/gcc-core-static-sysroot MAKEARGS=stage1 PLACEHOLDER_FOR_GMP=PLACEHOLDER_FOR_MPFR $5,,$6)
+  INSTALL_GCC_CORE_STATIC   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED ALLTARGETLIBGCC SYSROOT=$1/gcc-core-static-sysroot MAKEARGS=stage1 PLACEHOLDER_FOR_GMP=PLACEHOLDER_FOR_MPFR $5,,$6)
   INSTALL_UCLIBC_FINAL      = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-final-sysroot ENV=-i MAKEARGS=final $5 ,,$6)
   INSTALL_GCC_FINAL         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5,,$6)
   INSTALL_GDB               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)

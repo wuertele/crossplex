@@ -65,7 +65,8 @@ endif
 
   # cd to directory $1 and COPY or LINK every file found under that directory to an equivalent path rooted at direcory $2
   # if the devices of the two directories match, use LINK, otherwise use COPY.
-  Cpio_Findup = mkdir -p $2; if [ x`stat --format=%D $1` = x`stat --format=%D $2` ]; then $(call Cpio_Findlink,$1,$2) ; else $(call Cpio_Findcopy,$1,$2) ; fi
+
+  Cpio_Findup = mkdir -p $2; if [ ! -z $(STAT) ] && [ -x $(STAT) ] && [ -e $1 ] && [ -e $2 ] && [ x`stat --format=%D $1` = x`stat --format=%D $2` ]; then $(call Cpio_Findlink,$1,$2) && echo findlink $1 $2 done ; else $(call Cpio_Findcopy,$1,$2) && echo findcopy $1 $2 done ; fi 
 
   # This results in __crosstool_space containing just a space
   __crossplex_space := 
