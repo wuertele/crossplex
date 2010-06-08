@@ -1,0 +1,20 @@
+--- binutils-2.19.1/gas/config/tc-mips.c~	2009-01-14 00:49:59.000000000 -0800
++++ binutils-2.19.1/gas/config/tc-mips.c	2010-05-28 03:17:52.083422311 -0700
+@@ -3456,7 +3456,7 @@
+ 	     warning now.  */
+ 	  const char *msg = macro_warning (subtype);
+ 	  if (msg != 0)
+-	    as_warn (msg);
++	    as_warn ("%s", msg);
+ 	}
+       else
+ 	{
+@@ -14449,7 +14449,7 @@
+ 	{
+ 	  const char *msg = macro_warning (fragp->fr_subtype);
+ 	  if (msg != 0)
+-	    as_warn_where (fragp->fr_file, fragp->fr_line, msg);
++	    as_warn_where (fragp->fr_file, fragp->fr_line, "%s", msg);
+ 	}
+ 
+       /* Go through all the fixups for the first sequence.  Disable them

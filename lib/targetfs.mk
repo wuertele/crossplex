@@ -106,6 +106,8 @@ ifndef Configure_TargetFS
 
   TargetFS_Search_Definition = $($(firstword $(foreach token,$(filter-out PATH,$1),$(if $($(token)_$2),$(token))))_$2)
 
+  TargetFS_All_Definitions = $($(foreach token,$1,$(if $($(token)_$2),$(token)))_$2)
+
   # $1 = unique targetfs name (eg. "my-group/my-rootfs")
   # $2 = build top (eg "/path/to/build-top")
   # $3 = path code (eg "mipsel-glibc/toolchain host/tools PATH")
@@ -148,6 +150,10 @@ ifndef Configure_TargetFS
     $1_TARGETFS_DEFAULT_INSTALL_TAGS += $4
 
     $(if $5,$1_TOOLCHAIN_TARGET_TUPLE := $5)
+
+    $1_TargetFS_Tool_DESTDIR = $$(call TargetFS_Search_Definition,$3,$$1_DESTDIR)
+
+    $1_TargetFS_Tool_SENTINEL = $$(call TargetFS_Search_Definition,$3,$$1_INSTALLED_SENTINEL)
 
     $$($1_TARGETFS_PREFIX)/dev/loop0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ b 7 0
     $$($1_TARGETFS_PREFIX)/dev/tty:     ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 0
@@ -372,6 +378,8 @@ endef
       $1_$2-build-dependencies $3$4/.built: $($1_TARGETFS_TOOLCHAIN_TARGETS)				# can't build without a toolchain
       $1_$2-build-dependencies $3$4/.built: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
       $1_$2-build-dependencies $3$4/.built: $(patsubst %,$$($1_%_DEV_TARGETS),$($2_BUILD_DEPENDENCIES))	# these are the **_DEV_TARGETS (staged files) for each package that must be built before this one
+      #this next line is a better version of the previous line.  maybe delete the previous line...
+      $1_$2-build-dependencies $3$4/.built: $(foreach dependency,$($2_BUILD_DEPENDENCIES),$(call $1_TargetFS_Tool_SENTINEL,$(dependency))) 
 
       $1_$2-build-dependencies $3$4/.built: $(if $(filter SYSROOT=%,$8),$(patsubst SYSROOT=%,$$(%_TARGETFS_TARGETS),$(filter SYSROOT=%,$8))) # these are the **_TARGETS (installed files) for each package that must be built before this one
 
@@ -444,6 +452,10 @@ endef
       $3$4/$5_STAGE_SENTINEL_TARGET := $3$4/$5
 
     )
+
+    $1_MODULES += $2
+    $1_$2_DESTDIR := $6
+    $1_$2_INSTALLED_SENTINEL := $3$4/$5
 
   endef
 

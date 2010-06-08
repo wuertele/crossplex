@@ -84,6 +84,8 @@ ifndef MODULE_DETAILS_LOADED
 
   Gcc_Arch = $(sort $(foreach arch,$(patsubst GCC_ARCHMAP_%,%,$(filter GCC_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(GCC_ARCHMAP_$(arch)),$1),$(arch))))
 
+  gcc_BUILD_DEPENDENCIES += gmp mpfr
+
   gcc_CONFIGURE_ARGS  = --prefix=/
   gcc_CONFIGURE_ARGS += --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
   gcc_CONFIGURE_ARGS += $(if $(call Gcc_Arch,$($1_TARGETFS_TUPLE)),--with-arch=$(call Gcc_Arch,$($1_TARGETFS_TUPLE)))
@@ -110,6 +112,8 @@ ifndef MODULE_DETAILS_LOADED
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-target-optspace,$4)	# from BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-target-optspace,$4)	# from BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec
   gcc_CONFIGURE_ARGS += $(if $(filter NOSHARED,$4),--disable-shared,--enable-shared)
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,gmp),--with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp))
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpfr),--with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr))
 
   gcc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
 
@@ -285,7 +289,31 @@ ifndef MODULE_DETAILS_LOADED
 
   gdb_POST_INSTALL_STEPS = +$(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build DESTDIR=$5 install
 
-  ## Syslinux
+  ## gmp
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += gmp
+
+  gmp_LICENSE := GPL
+
+  gmp_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  gmp_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  gmp_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
+  gmp_CONFIGURE_ARGS += --enable-shared --disable-static --enable-fft --enable-mpbsd --enable-cxx
+
+  ## mpfr
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += mpfr
+
+  mpfr_LICENSE := GPL
+
+  mpfr_BUILD_DEPENDENCIES += gmp
+
+  mpfr_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  mpfr_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  mpfr_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
+  mpfr_CONFIGURE_ARGS += --enable-thread-safe --enable-shared --disable-static --with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp)
+
+ ## Syslinux
 
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += syslinux
 
@@ -1736,6 +1764,14 @@ ifndef MODULE_DETAILS_LOADED
 
   nasm_INSTALLABLE_minimal := bin/nasm
   nasm_INSTALLABLE_minimal := bin/ndisasm
+
+  # texinfo
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += texinfo
+
+  texinfo_LICENSE += GPL
+
+  texinfo_INSTALLABLE_minimal := bin/texinfo
 
   # fix-embedded-paths
 

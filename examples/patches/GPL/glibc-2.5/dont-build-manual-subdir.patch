@@ -1,0 +1,11 @@
+--- glibc-2.5/Makeconfig~	2006-07-10 14:42:27.000000000 -0700
++++ glibc-2.5/Makeconfig	2010-05-27 14:37:09.000000000 -0700
+@@ -913,7 +913,7 @@
+ all-subdirs = csu assert ctype locale intl catgets math setjmp signal	    \
+ 	      stdlib stdio-common libio malloc string wcsmbs time dirent    \
+ 	      grp pwd posix io termios resource misc socket sysvipc gmon    \
+-	      gnulib iconv iconvdata wctype manual shadow po argp	    \
++	      gnulib iconv iconvdata wctype shadow po argp	    \
+ 	      crypt nss localedata timezone rt conform debug		    \
+ 	      $(add-on-subdirs) $(dlfcn) $(binfmt-subdir)
+ 
