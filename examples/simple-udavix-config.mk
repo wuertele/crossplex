@@ -4,6 +4,7 @@
 # Specify Host build tools used for Udavix
 $(eval $(call Configure_TargetFS,localhost/ubuild-tools,$(BUILD_TOP),localhost/ubuild-tools PATH,STRIP LDD))
 
+$(eval $(call TargetFS_Install_Autoconf,localhost/ubuild-tools,termcap-1.3.1))
 $(eval $(call TargetFS_Install_Autoconf,localhost/ubuild-tools,gmp-4.3.1,NOSTAGE NODESTDIR))
 $(eval $(call TargetFS_Install_Autoconf,localhost/ubuild-tools,mpfr-2.4.2,NOSTAGE NODESTDIR))
 $(eval $(call TargetFS_Install_Make,localhost/ubuild-tools,syslinux-3.83 cdrtools-2.01.01a75,,default))

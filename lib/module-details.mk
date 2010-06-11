@@ -283,7 +283,7 @@ ifndef MODULE_DETAILS_LOADED
   gdb_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
   gdb_CONFIGURE_ARGS += --disable-werror
   gdb_CONFIGURE_ARGS += $(call TagCond,TARGET=%,--target=%,,$4)
-  gdb_CONFIGURE_ARGS += $(call TagCond,SYSROOT=%,--with-sysroot=%,,$4)
+  gdb_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
 
   gdb_POST_BUILD_STEPS = +mkdir -p $3/gdbserver-build; cd $3/gdbserver-build; $(call gcc_BUILD_ENVIRONMENT,$1,$2) $3/gdb/gdbserver/configure --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE) --target=$($1_TARGETFS_TUPLE) --includedir=$(call TagReVal,SYSROOT,$$(%_TARGETFS_PREFIX)/sysroot/usr/include,$2); $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build
 
@@ -294,6 +294,8 @@ ifndef MODULE_DETAILS_LOADED
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += gmp
 
   gmp_LICENSE := GPL
+
+  gmp_BUILD_DEPENDENCIES = termcap
 
   gmp_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
   gmp_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
