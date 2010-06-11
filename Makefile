@@ -93,4 +93,4 @@ FORCE:
 checkgit:
 	rm -rf ../$(VERSION)
 	mkdir -p ../$(VERSION)
-	cd ../$(VERSION); git init; git remote add github git@github.com:wuertele/crossplex.git; git pull github master
+	cd ../$(VERSION); git init; git remote add github https://github.com/wuertele/crossplex.git; git pull github master
