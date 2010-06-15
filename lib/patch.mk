@@ -223,9 +223,10 @@ define Patch_Order_Rules
 
     $2/new.patch: $2/.repliduplicated $$($2_PATCHES) $$(sort $$($2_BUILD_CONFIGS)) $2-compare/.repliduplicated $$($2-compare_PATCHES) $$(sort $$($2-compare_BUILD_CONFIGS))
 	@if [ `ls $2/.applied-* | wc -l` != `ls $2-compare/.applied-* | wc -l` ]; then echo ERROR!  Directories dont have same patch base!; echo; echo ls $2/.applied-\* ; ls $2/.applied-*; echo; echo ls $2-compare/.applied-\*; ls $2-compare/.applied-*; exit -1 ; fi
-	-diff --exclude=patchorder.mk --exclude=new.patch -Nur $2-compare $2 | perl -pe 's,$2,$1,g; s,$2-compare,$1,g;' > $$@
+	-diff --exclude=patchorder.mk --exclude=new.patch --exclude=*~ -Nur $2-compare $2 | perl -pe 's,$2,$1,g; s,$2-compare,$1,g;' > $$@
+	@echo If diff complains of recursive directory loops, you can ignore it.
 	cp $$@ $2/.applied-$$($2_NEW_PATCH_BASENAME)
-	@if [ `stat -c '%s' $$@` != 0 ]; then echo Created patch --- to install patch, choose one of the following: ; for dir in $$($2_PATCH_DIRS_SEARCHED); do if [ -d $$$$dir ]; then echo /bin/mv $$@ $$$$dir/$$($2_NEW_PATCH_BASENAME).patch; fi; done ; else echo Created empty patch... removing.; rm -f $$@; rm -f $2/.applied-$$($2_NEW_PATCH_BASENAME); fi
+	@if [ `stat -c '%s' $$@` != 0 ]; then echo Created patch --- to install patch, choose one of the following: ; for dir in $$($2_PATCH_DIRS_SEARCHED); do if [ ! -d $$$$dir ]; then echo -n mkdir -p $$$$dir\; ; fi; echo /bin/mv $$@ $$$$dir/$$($2_NEW_PATCH_BASENAME).patch; done ; else echo Created empty patch... removing.; rm -f $$@; rm -f $2/.applied-$$($2_NEW_PATCH_BASENAME); fi
 
   endif
 

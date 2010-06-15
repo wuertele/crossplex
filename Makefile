@@ -94,3 +94,11 @@ checkgit:
 	rm -rf ../$(VERSION)
 	mkdir -p ../$(VERSION)
 	cd ../$(VERSION); git init; git remote add github https://github.com/wuertele/crossplex.git; git pull github master
+
+
+TEST_PATH := $(shell pwd)/test
+
+test-build-examples:
+	rm -rf test
+	$(MAKE) install DESTDIR=$(TEST_PATH)
+	$(MAKE) -C examples -j10 vmware udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty
