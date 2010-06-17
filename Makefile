@@ -102,3 +102,24 @@ test-build-examples:
 	rm -rf test
 	$(MAKE) install DESTDIR=$(TEST_PATH)
 	$(MAKE) -C examples -j10 vmware udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty
+
+BUILD_GUEST_IP=10.77.181.181
+VMGUEST_TARBALL=/nightly/dave/vmware/Ubuntu-JeOS-Dev.tbz
+
+Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: ../$(VERSION).tbz $(VMGUEST_TARBALL)
+	rm -rf Ubuntu-JeOS-Dev-$(VERSION) Ubuntu-JeOS-Dev
+	tar xvjf "$(VMGUEST_TARBALL)"
+	mv Ubuntu-JeOS-Dev Ubuntu-JeOS-Dev-$(VERSION)
+	/usr/bin/vmplayer Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx &
+	sleep 60
+	/usr/bin/scp -i id_cpbuild ../$(VERSION).tbz crossplex@$(BUILD_GUEST_IP):
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild "cd /home/crossplex/$(VERSION) && make install && shutdown -h now"
+	sleep 20
+	tar cvjf Ubuntu-JeOS-Dev-$(VERSION).tbz Ubuntu-JeOS-Dev-$(VERSION)
+
+test-build-vmrelease: Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+	/usr/bin/vmplayer Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx &
+	sleep 60
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i /opt/home/dave/.ssh/id_cpbuild 'shutdown -h now'
