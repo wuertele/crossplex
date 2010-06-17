@@ -48,4 +48,4 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/nasm-2.07.tar.gz,http://
 $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/uClibc-0.9.30.1.tar.bz2,http://www.uclibc.org/downloads/uClibc-0.9.30.1.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/uClibc-0.9.31.tar.bz2,http://www.uclibc.org/downloads/uClibc-0.9.31.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/gmp-4.3.1.tar.bz2,ftp://ftp.sunet.se/pub/gnu/gmp/gmp-4.3.1.tar.bz2))
-$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/mpfr-2.4.2.tar.bz2,http://www.mpfr.org/mpfr-current/mpfr-2.4.2.tar.bz2))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/mpfr-2.4.2.tar.bz2,http://www.mpfr.org/mpfr-2.4.2/mpfr-2.4.2.tar.bz2))
