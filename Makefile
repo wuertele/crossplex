@@ -93,7 +93,8 @@ FORCE:
 checkgit:
 	rm -rf ../$(VERSION)
 	mkdir -p ../$(VERSION)
-	cd ../$(VERSION); git init; git remote add github https://github.com/wuertele/crossplex.git; git pull github master
+	cd ../$(VERSION); git init; git remote add github git@github.com:wuertele/crossplex.git; git pull github master
+#	cd ../$(VERSION); git init; git remote add github https://github.com/wuertele/crossplex.git; git pull github master
 
 
 TEST_PATH := $(shell pwd)/test
@@ -110,7 +111,7 @@ Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: .
 	rm -rf Ubuntu-JeOS-Dev-$(VERSION) Ubuntu-JeOS-Dev
 	tar xvjf "$(VMGUEST_TARBALL)"
 	mv Ubuntu-JeOS-Dev Ubuntu-JeOS-Dev-$(VERSION)
-	/usr/bin/vmplayer Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx &
+	/usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/scp -i id_cpbuild ../$(VERSION).tbz crossplex@$(BUILD_GUEST_IP):
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
@@ -119,7 +120,7 @@ Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: .
 	tar cvjf Ubuntu-JeOS-Dev-$(VERSION).tbz Ubuntu-JeOS-Dev-$(VERSION)
 
 test-build-vmrelease: Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx
-	/usr/bin/vmplayer Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx &
+	/usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i /opt/home/dave/.ssh/id_cpbuild 'shutdown -h now'
