@@ -124,3 +124,4 @@ test-build-vmrelease: Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	sleep 60
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i /opt/home/dave/.ssh/id_cpbuild 'shutdown -h now'
+
