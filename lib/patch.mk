@@ -82,6 +82,7 @@ define Patch_Rules_Core
 	+if [ -f $$@ ] ; then $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $$(@D)/.unapplied-$$(*F) ; fi
 	cd $$(@D) && patch -g 0 -f -p1 < $$<
 	cp -f $$< $$@
+	$(if $(GIT),cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F))
 	rm -f $$(@D)/.unapplied-$$(*F)
 
     # This is a system of unrolling patches.  It depends on $3/patchorder.mk properly ordering the unroll.
@@ -130,6 +131,7 @@ define Patch_Rules
     else
 	rm -rf $$(@D)
 	$(call Cpio_Findup,$2,$3)
+	$(if $(GIT),cd $$(@D) && $(GIT) init && $(GIT) add -f . && $(GIT) commit -q -m "initial commit" && $(GIT) tag $1 && $(GIT) tag base)
 	touch $$@
     endif
 

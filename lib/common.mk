@@ -43,6 +43,8 @@ endif
   # take a list of paths from standard input, and LINK the files at those paths to equivalent paths rooted at the path in the following argument
   Cpio_Link		:= /bin/cpio -aplmdu
 
+#  GIT := $(shell which git)
+
   STAT := $(shell which stat)
 
   # Copy or Link a single file named $2 from directory $1 to directory $3.  If the device hosting directory $1 matches that for directory $3, use link, otherwise use copy.
