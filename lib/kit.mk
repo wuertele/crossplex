@@ -25,6 +25,24 @@ ifndef Magic_Tarball_Kit
   # $1 = unique kit name (eg. "my-super-duper-kit")
   # $2 = host-tools targetfs unique name (eg. "host-tools")
   # $3 = kernel build unique name (eg. "davix-vmwarek")
+  # $4 = rootfs unique name
+  # $5 = build top
+  define VMDX_Kit
+
+    $(if $($1_VMDX_KIT_SOURCE_FILES),$(error Called VMDX_Kit with non-unique name $1))
+
+    $1_VMDX_KIT_SOURCE_FILES := crossplex was here
+
+    $5/$1/$1.vmdx: $($2_qemu_TARGETS)
+	touch $$@
+
+    $1/VMDX_FILENAME := $5/$1/$1.vmdx
+
+  endef
+
+  # $1 = unique kit name (eg. "my-super-duper-kit")
+  # $2 = host-tools targetfs unique name (eg. "host-tools")
+  # $3 = kernel build unique name (eg. "davix-vmwarek")
   # $4 = build top
   define LiveCD_Kit
 
@@ -43,10 +61,6 @@ ifndef Magic_Tarball_Kit
     $4/$1/$1-staging/isolinux/LINUX: $($3_KERNEL_BZIMAGE_FILENAME)
 	mkdir -p $$(@D)
 	cp -a $$< $$@
-
-    jt1:
-	echo $4/$1/$1-staging/isolinux/LINUX
-	echo $($3_KERNEL_BZIMAGE_FILENAME)
 
     $4/$1/$1.iso: $($2_TARGETFS_PREFIX)/bin/mkisofs $4/$1/$1-staging/isolinux/LINUX $4/$1/$1-staging/isolinux/isolinux.cfg $4/$1/$1-staging/isolinux/isolinux.bin
 	mkdir -p $$(@D)

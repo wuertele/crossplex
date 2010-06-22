@@ -1775,6 +1775,16 @@ ifndef MODULE_DETAILS_LOADED
 
   texinfo_INSTALLABLE_minimal := bin/texinfo
 
+  # qemu
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += qemu
+
+  qemu_LICENSE += GPL
+
+  qemu_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --disable-bluez
+
+  qemu_INSTALLABLE_minimal := bin/qemu-img
+
   # fix-embedded-paths
 
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += fix-embedded-paths
