@@ -102,12 +102,12 @@ TEST_PATH := $(shell pwd)/test
 test-build-examples:
 	rm -rf test
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples -j10 vmware udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty
+	$(MAKE) -C examples vmware udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
 
 test-self-build:
 	rm -rf test
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/  $(MAKE) -C examples sbvmdx CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty
+	$(MAKE) -C examples sbvmdx CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/  
 
 BUILD_GUEST_IP=10.77.181.181
 VMGUEST_TARBALL=/nightly/dave/vmware/Ubuntu-JeOS-Dev.tbz

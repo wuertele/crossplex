@@ -169,7 +169,7 @@ ifndef MODULE_DETAILS_LOADED
 
   glibc_SYSROOT_DEPENDENCIES = binutils linux_headers gcc
 
-  glibc_PRE_CONFIGURE_STEPS = cd $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3; cp -f config.cache $$(@D)/config.cache; 
+  glibc_PRE_CONFIGURE_STEPS = cd $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3; cp -f config.cache $$(@D)/config.cache; 
 
   glibc_CONFIGURE_ARGS  = --prefix=/usr
   glibc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
@@ -583,7 +583,7 @@ ifndef MODULE_DETAILS_LOADED
   termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,STRIP=$($1_TARGETFS_TUPLE)-strip)
   termcap_BUILD_ENVIRONMENT += $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,RANLIB=$($1_TARGETFS_TUPLE)-ranlib)
 
-  termcap_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage) --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
+  termcap_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage) --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
 
   termcap_INSTALLABLE_devel += lib/libtermcap.a
   termcap_INSTALLABLE_devel += include/termcap.h
@@ -600,7 +600,7 @@ ifndef MODULE_DETAILS_LOADED
 
   zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR="$($1_TARGETFS_TUPLE)-ar rc" AS=$($1_TARGETFS_TUPLE)-as LD=$($1_TARGETFS_TUPLE)-gcc NM=$($1_TARGETFS_TUPLE)-nm CC=$($1_TARGETFS_TUPLE)-gcc GCC=$($1_TARGETFS_TUPLE)-gcc CXX=$($1_TARGETFS_TUPLE)-g++ STRIP=$($1_TARGETFS_TUPLE)-strip RANLIB=$($1_TARGETFS_TUPLE)-ranlib
 
-  zlib_CONFIGURE_ARGS = --shared --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage)
+  zlib_CONFIGURE_ARGS = --shared --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage)
 
   zlib_INSTALLABLE_minimal += lib/libz.so
   zlib_INSTALLABLE_minimal += lib/libz.so.1
@@ -792,7 +792,7 @@ ifndef MODULE_DETAILS_LOADED
 
   openssl_BUILD_DEPENDENCIES := zlib
 
-  openssl_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --install-prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/stage linux-elf shared zlib-dynamic
+  openssl_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --install-prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage linux-elf shared zlib-dynamic
 
   openssl_MAKE_ARGS = -j1 CC=$($1_TARGETFS_TUPLE)-gcc AR="$($1_TARGETFS_TUPLE)-ar r " RANLIB=$($1_TARGETFS_TUPLE)-ranlib INCLUDES="-I. -I.. -I../.. -I../include -I../crypto -I../../include -I$$($1_zlib_STAGE)/include"
 
@@ -1026,7 +1026,7 @@ ifndef MODULE_DETAILS_LOADED
 
   libdrm_BUILD_DEPENDENCIES := pthread-stubs
 
-  libdrm_PRE_CONFIGURE_STEPS = sed < $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3/configure > $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3/configure-2 's/hardcode_libdir_flag_spec=$$$$lt_hardcode_libdir_flag_spec/hardcode_libdir_flag_spec=/'; mv $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3/configure-2 $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3/configure; chmod 755 $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$3 $4 $6)/$3/configure
+  libdrm_PRE_CONFIGURE_STEPS = sed < $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3/configure > $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3/configure-2 's/hardcode_libdir_flag_spec=$$$$lt_hardcode_libdir_flag_spec/hardcode_libdir_flag_spec=/'; mv $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3/configure-2 $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3/configure; chmod 755 $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3/configure
 
   libdrm_INSTALLABLE_minimal += lib/libdrm.so.2.4.0
   libdrm_INSTALLABLE_minimal += lib/libdrm.so.2
@@ -1757,6 +1757,7 @@ ifndef MODULE_DETAILS_LOADED
 
   util-linux_INSTALLABLE_minimal := 
   util-linux_INSTALLABLE_minimal += bin/mount
+  util-linux_INSTALLABLE_minimal += bin/sfdisk
 
   # nasm
 

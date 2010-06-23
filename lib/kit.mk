@@ -33,7 +33,12 @@ ifndef Magic_Tarball_Kit
 
     $1_VMDX_KIT_SOURCE_FILES := crossplex was here
 
-    $5/$1/$1.vmdx: $($2_qemu_TARGETS)
+    $5/$1/$1.raw: $($2_qemu_TARGETS) $($2_util-linux_TARGETS) $($1_TARGETFS_TARGETS)
+	genext2fs -b 1024 -d src -D device_table.txt flashdisk.img
+        #qemu-img create -f raw $$@ 1GB
+        #for ldev in /dev/loop0 /dev/loop1 /dev/loop2; do losetup $ldev > /dev/null 2>&1; if [ $? -ne 0 ]; then echo $ldev OK; break; fi; done
+
+    $5/$1/$1.vmdx: $($2_qemu_TARGETS) $5/$1/$1.raw
 	touch $$@
 
     $1/VMDX_FILENAME := $5/$1/$1.vmdx
