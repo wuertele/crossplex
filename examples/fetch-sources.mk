@@ -51,4 +51,13 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/gmp-4.3.1.tar.bz2,ftp://ftp.su
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/mpfr-2.4.2.tar.bz2,http://www.mpfr.org/mpfr-2.4.2/mpfr-2.4.2.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/qemu-0.12.4.tar.gz,http://download.savannah.gnu.org/releases/qemu/qemu-0.12.4.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/util-linux-2.12r.tar.gz,ftp://ftp.kernel.org/pub/linux/utils/util-linux/util-linux-2.12r.tar.gz))
-$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/genext2fs-1.4.1.tar.gz,http://sourceforge.net/projects/genext2fs/files/genext2fs/1.4.1/genext2fs-1.4.1.tar.gz/download))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/genext2fs-1.4.1.tar.gz,http://downloads.sourceforge.net/project/genext2fs/genext2fs/1.4.1/genext2fs-1.4.1.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/grub-1.96.tar.gz,ftp://alpha.gnu.org/gnu/grub/grub-1.96.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/grub-1.98.tar.gz,ftp://alpha.gnu.org/gnu/grub/grub-1.98.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/e2fsprogs-1.41.12.tar.gz,http://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/1.41.12/e2fsprogs-1.41.12.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/multipath-tools-0.4.9.tar.bz2,http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.4.9.tar.bz2))
+$(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz,ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.68.tgz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/bash-4.1.tar.gz,ftp://ftp.cwru.edu/pub/bash/bash-4.1.tar.gz))
+
+$(THIRD_PARTY)/LGPL/LVM2-2.02.68.tgz: $(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz
+	cd /tmp && rm -rf LVM2-2.02.68 LVM2.2.02.68 && tar xvzf $< && mv LVM2.2.02.68 LVM2-2.02.68 && tar cvzf $@ LVM2-2.02.68

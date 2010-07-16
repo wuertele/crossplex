@@ -22,7 +22,10 @@ BINDIR ?= $(DESTDIR)/bin
 ETCDIR ?= $(DESTDIR)/etc
 
 LIBFILES_TOFIX := $(patsubst %.in,%,$(filter %.in,$(shell find lib -type f)))
-LIBFILES_NOFIX := $(filter-out %.in,$(shell find lib -type f))
+LIBFILES_NOFIX := $(filter-out $(patsubst %,%.in,$(LIBFILES_TOFIX)) $(LIBFILES_TOFIX),$(shell find lib -type f))
+
+$(warning LIBFILES_TOFIX = $(LIBFILES_TOFIX))
+$(warning LIBFILES_NOFIX = $(LIBFILES_NOFIX))
 
 ETCFILES := MOTOROLA_README COPYING Makefile
 LIBFILES := $(patsubst lib/%,%,$(LIBFILES_NOFIX) $(LIBFILES_TOFIX))
@@ -107,7 +110,26 @@ test-build-examples:
 test-self-build:
 	rm -rf test
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples sbvmdx CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/  
+	$(MAKE) -C examples sbvmdk CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/  
+
+test-dave1:
+	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/localhost/work_PATH/grub-1.98-NOSTAGE-NODESTDIR/grub-1.98/.repliduplicated CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
+
+/nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk: /nightly/dave/crossplex/git/crossplex/lib/kit.mk
+	$(MAKE) test-clean
+	$(MAKE) -C examples sbvmdk CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
+
+/nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk
+
+test-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk
+test-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx
+	# test the result
+	vmplayer /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx
+
+test-clean:
+	rm -rf $(TEST_PATH)/lib
+	$(MAKE) install DESTDIR=$(TEST_PATH)
+	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
 
 BUILD_GUEST_IP=10.77.181.181
 VMGUEST_TARBALL=/nightly/dave/vmware/Ubuntu-JeOS-Dev.tbz

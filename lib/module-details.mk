@@ -1755,9 +1755,78 @@ ifndef MODULE_DETAILS_LOADED
 
   util-linux_RUNTIME_DEPENDENCIES += libc
 
-  util-linux_INSTALLABLE_minimal := 
-  util-linux_INSTALLABLE_minimal += bin/mount
-  util-linux_INSTALLABLE_minimal += bin/sfdisk
+  util-linux_INSTALLABLE_full := 
+  util-linux_INSTALLABLE_full += usr/share/misc/getopt/getopt-parse.bash
+  util-linux_INSTALLABLE_full += usr/share/misc/getopt/getopt-parse.tcsh
+  util-linux_INSTALLABLE_full += usr/share/misc/getopt/getopt-test.bash
+  util-linux_INSTALLABLE_full += usr/share/misc/getopt/getopt-test.tcsh
+  util-linux_INSTALLABLE_full += usr/share/info/ipc.info
+  util-linux_INSTALLABLE_full += usr/bin/getopt
+  util-linux_INSTALLABLE_full += usr/bin/fdformat
+  util-linux_INSTALLABLE_full += usr/bin/isosize
+  util-linux_INSTALLABLE_full += usr/bin/setfdprm
+  util-linux_INSTALLABLE_full += usr/bin/raw
+  util-linux_INSTALLABLE_full += usr/bin/cal
+  util-linux_INSTALLABLE_full += usr/bin/chkdupexe
+  util-linux_INSTALLABLE_full += usr/bin/ddate
+  util-linux_INSTALLABLE_full += usr/bin/logger
+  util-linux_INSTALLABLE_full += usr/bin/look
+  util-linux_INSTALLABLE_full += usr/bin/mcookie
+  util-linux_INSTALLABLE_full += usr/bin/namei
+  util-linux_INSTALLABLE_full += usr/bin/rename
+  util-linux_INSTALLABLE_full += usr/bin/script
+  util-linux_INSTALLABLE_full += usr/bin/whereis
+  util-linux_INSTALLABLE_full += usr/bin/write
+  util-linux_INSTALLABLE_full += usr/bin/setterm
+  util-linux_INSTALLABLE_full += usr/bin/cytune
+  util-linux_INSTALLABLE_full += usr/bin/flock
+  util-linux_INSTALLABLE_full += usr/bin/ipcrm
+  util-linux_INSTALLABLE_full += usr/bin/ipcs
+  util-linux_INSTALLABLE_full += usr/bin/renice
+  util-linux_INSTALLABLE_full += usr/bin/setsid
+  util-linux_INSTALLABLE_full += usr/bin/col
+  util-linux_INSTALLABLE_full += usr/bin/colcrt
+  util-linux_INSTALLABLE_full += usr/bin/colrm
+  util-linux_INSTALLABLE_full += usr/bin/column
+  util-linux_INSTALLABLE_full += usr/bin/hexdump
+  util-linux_INSTALLABLE_full += usr/bin/rev
+  util-linux_INSTALLABLE_full += usr/bin/line
+  util-linux_INSTALLABLE_full += usr/bin/tailf
+  util-linux_INSTALLABLE_full += usr/bin/ul
+  util-linux_INSTALLABLE_full += usr/bin/pg
+  util-linux_INSTALLABLE_full += usr/sbin/readprofile
+  util-linux_INSTALLABLE_full += usr/sbin/tunelp
+  util-linux_INSTALLABLE_full += usr/sbin/rdev
+  util-linux_INSTALLABLE_full += sbin/mkfs
+  util-linux_INSTALLABLE_full += sbin/mkswap
+  util-linux_INSTALLABLE_full += sbin/blockdev
+  util-linux_INSTALLABLE_full += sbin/elvtune
+  util-linux_INSTALLABLE_full += sbin/fsck.minix
+  util-linux_INSTALLABLE_full += sbin/mkfs.minix
+  util-linux_INSTALLABLE_full += sbin/mkfs.bfs
+  util-linux_INSTALLABLE_full += sbin/fsck.cramfs
+  util-linux_INSTALLABLE_full += sbin/mkfs.cramfs
+  util-linux_INSTALLABLE_full += sbin/agetty
+  util-linux_INSTALLABLE_full += sbin/swapon
+  util-linux_INSTALLABLE_full += sbin/losetup
+  util-linux_INSTALLABLE_full += sbin/pivot_root
+  util-linux_INSTALLABLE_full += sbin/fdisk
+  util-linux_INSTALLABLE_full += sbin/cfdisk
+  util-linux_INSTALLABLE_full += sbin/sfdisk
+  util-linux_INSTALLABLE_full += sbin/hwclock
+  util-linux_INSTALLABLE_full += sbin/ctrlaltdel
+  util-linux_INSTALLABLE_full += sbin/sln
+  util-linux_INSTALLABLE_full += etc/fdprm
+  util-linux_INSTALLABLE_full += bin/kill
+  util-linux_INSTALLABLE_full += bin/mount
+  util-linux_INSTALLABLE_full += bin/umount
+  util-linux_INSTALLABLE_full += bin/arch
+  util-linux_INSTALLABLE_full += bin/dmesg
+  util-linux_INSTALLABLE_full += bin/more
+  util-linux_INSTALLABLE_full += bin/more
+  util-linux_INSTALLABLE_full += sbin/addpart
+  util-linux_INSTALLABLE_full += sbin/delpart
+  util-linux_INSTALLABLE_full += sbin/partx
 
   # nasm
 
@@ -1786,6 +1855,194 @@ ifndef MODULE_DETAILS_LOADED
 
   qemu_INSTALLABLE_minimal := bin/qemu-img
 
+  # grub
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += grub
+
+  grub_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) CFLAGS=-g LDFLAGS=-g
+
+  grub_LICENSE += GPL
+
+  grub_INSTALLABLE_minimal := bin/grub
+  grub_INSTALLABLE_minimal += bin/grub-mkimage
+  grub_INSTALLABLE_minimal += sbin/grub-setup
+
+  grub_INSTALLABLE_i386_pc := lib/grub/i386-pc/boot.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/diskboot.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/kernel.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/pxeboot.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/lnxboot.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/cdboot.img
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/biosdisk.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/_chain.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/_linux.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/linux.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/normal.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/_multiboot.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/chain.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/multiboot.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/reboot.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/halt.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/vbe.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/vbetest.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/vbeinfo.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/video.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/gfxterm.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/videotest.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/play.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/bitmap.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/tga.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/cpuid.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/serial.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ata.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/vga.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/memdisk.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/jpeg.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/png.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/pci.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/lspci.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/fshelp.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/fat.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ufs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ext2.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ntfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ntfscomp.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/minix.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/hfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/jfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/iso9660.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/xfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/affs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/sfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/hfsplus.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/reiserfs.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/cpio.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/amiga.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/apple.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/pc.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/sun.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/acorn.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/gpt.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/raid.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/lvm.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/hello.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/boot.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/terminal.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/ls.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/cmp.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/cat.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/help.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/font.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/search.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/loopback.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/configfile.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/echo.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/terminfo.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/test.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/blocklist.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/hexdump.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/read.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/gzio.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/elf.mod
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/moddep.lst
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/command.lst
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/fs.lst
+  grub_INSTALLABLE_i386_pc += lib/grub/i386-pc/update-grub_lib
+
+  grub_INSTALLABLE_shared += lib/grub/update-grub_lib
+  grub_INSTALLABLE_shared += bin/grub-mkrescue
+  grub_INSTALLABLE_shared += sbin/grub-mkdevicemap
+  grub_INSTALLABLE_shared += sbin/grub-probe
+  grub_INSTALLABLE_shared += sbin/grub-install
+  grub_INSTALLABLE_shared += sbin/update-grub
+  grub_INSTALLABLE_shared += etc/grub.d/00_header
+  grub_INSTALLABLE_shared += etc/grub.d/10_linux
+  grub_INSTALLABLE_shared += etc/grub.d/10_hurd
+  grub_INSTALLABLE_shared += etc/grub.d/README
+
+  # e2fsprogs
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += e2fsprogs
+
+  e2fsprogs_LICENSE += GPL
+
+  e2fsprogs_INSTALLABLE_basic := sbin/e2fsck
+  e2fsprogs_INSTALLABLE_basic += sbin/fsck.ext2
+  e2fsprogs_INSTALLABLE_basic += sbin/fsck.ext3
+  e2fsprogs_INSTALLABLE_basic += sbin/fsck.ext4
+  e2fsprogs_INSTALLABLE_basic += sbin/fsck.ext4dev
+  e2fsprogs_INSTALLABLE_basic += sbin/debugfs
+  e2fsprogs_INSTALLABLE_basic += sbin/mke2fs
+  e2fsprogs_INSTALLABLE_basic += sbin/badblocks
+  e2fsprogs_INSTALLABLE_basic += sbin/tune2fs
+  e2fsprogs_INSTALLABLE_basic += sbin/dumpe2fs
+  e2fsprogs_INSTALLABLE_basic += sbin/blkid
+  e2fsprogs_INSTALLABLE_basic += sbin/logsave
+  e2fsprogs_INSTALLABLE_basic += sbin/e2image
+  e2fsprogs_INSTALLABLE_basic += sbin/fsck
+  e2fsprogs_INSTALLABLE_basic += sbin/e2undo
+  e2fsprogs_INSTALLABLE_basic += sbin/mklost+found
+  e2fsprogs_INSTALLABLE_basic += sbin/filefrag
+  e2fsprogs_INSTALLABLE_basic += sbin/e2freefrag
+  e2fsprogs_INSTALLABLE_basic += sbin/uuidd
+  e2fsprogs_INSTALLABLE_basic += sbin/mkfs.ext2
+  e2fsprogs_INSTALLABLE_basic += sbin/mkfs.ext3
+  e2fsprogs_INSTALLABLE_basic += sbin/mkfs.ext4
+  e2fsprogs_INSTALLABLE_basic += sbin/mkfs.ext4dev
+  e2fsprogs_INSTALLABLE_basic += sbin/e2label
+  e2fsprogs_INSTALLABLE_basic += sbin/findfs
+  e2fsprogs_INSTALLABLE_basic += sbin/resize2fs
+  e2fsprogs_INSTALLABLE_basic += share/info/libext2fs.info.gz
+  e2fsprogs_INSTALLABLE_basic += bin/chattr
+  e2fsprogs_INSTALLABLE_basic += bin/lsattr
+  e2fsprogs_INSTALLABLE_basic += bin/uuidgen
+  e2fsprogs_INSTALLABLE_basic += lib/e2initrd_helper
+  e2fsprogs_INSTALLABLE_basic += etc/mke2fs.conf
+
+  # genext2fs
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += genext2fs
+
+  genext2fs_LICENSE += GPL
+
+  genext2fs_INSTALLABLE_minimal := bin/genext2fs
+
+  # LVM2
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += LVM2
+
+  LVM2_LICENSE += LGPL
+
+  LVM2_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE) --enable-static_link --disable-selinux
+
+  LVM2_INSTALLABLE_devel := etc/lvm/lvm.conf
+  LVM2_INSTALLABLE_devel += sbin/lvmdump
+  LVM2_INSTALLABLE_devel += sbin/lvmconf
+  LVM2_INSTALLABLE_devel += sbin/vgimportclone
+  LVM2_INSTALLABLE_devel += sbin/fsadm
+  LVM2_INSTALLABLE_devel += sbin/lvm
+  LVM2_INSTALLABLE_devel += sbin/dmsetup
+  LVM2_INSTALLABLE_devel += lib/libdevmapper.so.1.02
+  LVM2_INSTALLABLE_devel += include/libdevmapper.h
+
+  # multipath-tools
+
+  CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += multipath-tools
+
+  multipath-tools_LICENSE += GPL
+
+  multipath-tools_BUILD_DEPENDENCIES := LVM2
+
+  multipath-tools_MAKE_ARGS = BUILDDIRS=kpartx OPTFLAGS="-I$($1_LVM2_STAGE)/include -pipe -g -Wall -Wunused -Wstrict-prototypes" LDFLAGS="-static -L$($1_LVM2_STAGE)/lib -ldevmapper"
+
+  multipath-tools_MAKE_INSTALL_ARGS := BUILDDIRS=kpartx install
+
+  multipath-tools_INSTALLABLE_minimal += sbin/kpartx
+  multipath-tools_INSTALLABLE_minimal += lib/udev/kpartx_id
+  multipath-tools_INSTALLABLE_minimal += etc/udev/rules.d/kpartx.rules
+
+  multipath-tools_INSTALLABLE_devel += usr/share/man/man8/kpartx.8.gz
+
   # fix-embedded-paths
 
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += fix-embedded-paths
@@ -1793,6 +2050,7 @@ ifndef MODULE_DETAILS_LOADED
   fix-embedded-paths_LICENSE += GPL
 
   fix-embedded-paths_INSTALLABLE_minimal += bin/fix-embedded-paths
+
 
   # Busybox
 

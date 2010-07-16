@@ -1,0 +1,17 @@
+# Disk DescriptorFile
+version=1
+CID=49ad5d03
+parentCID=ffffffff
+createType="twoGbMaxExtentSparse"
+
+# Extent description
+RW 1024000 SPARSE "handmade-s001.vmdk"
+
+# The Disk Data Base 
+#DDB
+
+ddb.virtualHWVersion = "4"
+ddb.geometry.cylinders = "1015"
+ddb.geometry.heads = "16"
+ddb.geometry.sectors = "63"
+ddb.adapterType = "ide"

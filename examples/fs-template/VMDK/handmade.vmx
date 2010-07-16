@@ -1,0 +1,66 @@
+#!/usr/bin/vmware
+
+virtualHW.version = "4"
+config.version = "8"
+guestOS = "other26xlinux"
+
+displayName = "Handmade VMX"
+
+# Memory size and other memory settings
+memsize = "320"
+MemAllowAutoScaleDown = "FALSE"
+MemTrimRate = "-1"
+
+# Unique ID for the virtual machine will be created
+uuid.action = "create"
+
+# Remind to install VMware Tools
+# This setting has no effect in VMware Player
+tools.remindInstall = "FALSE"
+
+# Startup hints interfers with automatic startup of a virtual machine
+# This setting has no effect in VMware Player
+hints.hideAll = "TRUE"
+
+# First serial port, physical COM1 is not available
+serial0.present = "FALSE"
+
+# Optional second serial port, physical COM2 is available
+serial1.present = "FALSE"
+
+# First parallell port, physical LPT1 is not available
+parallel0.present = "FALSE"
+
+# Logging
+# This config activates logging, and keeps last log
+logging = "TRUE"
+log.fileName = "My_Virtual_Machine.log"
+log.append = "TRUE"
+log.keepOld = "3"
+
+# These settings decides interaction between your
+# computer and the virtual machine
+isolation.tools.hgfs.disable = "FALSE"
+isolation.tools.dnd.disable = "FALSE"
+isolation.tools.copy.enable = "TRUE"
+isolation.tools.paste.enabled = "TRUE"
+
+# First network interface card
+ethernet0.present = "TRUE"
+ethernet0.virtualDev = "vlance"
+ethernet0.connectionType = "nat"
+ethernet0.addressType = "generated"
+ethernet0.generatedAddressOffset = "0"
+
+# Settings for physical floppy drive
+floppy0.present = "FALSE"
+
+# Settings for physical CDROM drive
+ide1:0.present = "FALSE"
+
+# First IDE disk, size 500Mb
+ide0:0.present = "TRUE"
+ide0:0.fileName = "selfrep.vmdk"
+ide0:0.mode = "persistent"
+ide0:0.startConnected = "TRUE"
+ide0:0.writeThrough = "TRUE"

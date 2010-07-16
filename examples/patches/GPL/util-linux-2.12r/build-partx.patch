@@ -1,0 +1,36 @@
+--- util-linux-2.12r/Makefile~	2004-12-22 16:43:09.000000000 -0800
++++ util-linux-2.12r/Makefile	2010-06-29 11:11:03.000000000 -0700
+@@ -18,7 +18,8 @@
+ 	fdisk \
+ 	hwclock \
+ 	sys-utils \
+-	text-utils
++	text-utils \
++	partx
+ 
+ .PHONEY: all install clean now
+ all:	defines.h
+--- util-linux-2.12r/partx/Makefile	2002-04-10 03:11:07.000000000 -0700
++++ util-linux-2.12r/partx/Makefile.dave	2010-06-29 11:16:54.000000000 -0700
+@@ -1,7 +1,12 @@
++include ../make_include
++include ../MCONFIG
++
+ OBJ = bsd.o dos.o partx.o solaris.o unixware.o gpt.o crc32.o
+ CFLAGS += -Wall
+ 
+-all: addpart delpart partx
++SBIN = addpart delpart partx
++
++all: $(SBIN)
+ 
+ partx:	$(OBJ)
+ 
+@@ -13,3 +18,7 @@
+ 	rm -f $(OBJ) addpart.o delpart.o addpart delpart partx *~
+ 
+ $(OBJ): partx.h
++
++install: all
++	$(INSTALLDIR) $(SBINDIR) $(BINDIR) $(USRBINDIR)
++	$(INSTALLBIN) $(SBIN) $(SBINDIR)

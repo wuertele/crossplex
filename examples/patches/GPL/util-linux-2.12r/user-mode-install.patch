@@ -1,0 +1,20 @@
+--- util-linux-2.12r/MCONFIG~	2004-12-12 15:15:48.000000000 -0800
++++ util-linux-2.12r/MCONFIG	2010-06-25 14:35:59.000000000 -0700
+@@ -77,7 +77,7 @@
+ # user's tty to "tty" [The login in util-linux does this correctly, and
+ # xterm will do it correctly if X is compiled with USE_TTY_GROUP set
+ # properly.]
+-USE_TTY_GROUP=yes
++USE_TTY_GROUP=no
+ 
+ # If HAVE_KILL is set to "yes", then kill will not be built or
+ # installed from the misc-utils subdirectory.
+@@ -220,7 +220,7 @@
+ INSTALLBIN=	$(INSTALL) -m $(BINMODE)
+ INSTALLMAN=	$(INSTALL) -m $(MANMODE)
+ INSTALLDAT=	$(INSTALL) -m $(DATMODE)
+-INSTALLSUID=    $(INSTALL) -m $(SUIDMODE) -o root
++INSTALLSUID=    $(INSTALL) -m $(SUIDMODE)
+ 
+ ifeq "$(DISABLE_NLS)" "yes"
+ NLSFLAGS = -DDISABLE_NLS

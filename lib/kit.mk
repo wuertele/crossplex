@@ -22,26 +22,104 @@ ifndef Magic_Tarball_Kit
 
   include $(CROSSPLEX_BUILD_SYSTEM)/targetfs.mk
 
+  GRUB_MODULES := biosdisk part_msdos ext2
+
   # $1 = unique kit name (eg. "my-super-duper-kit")
   # $2 = host-tools targetfs unique name (eg. "host-tools")
   # $3 = kernel build unique name (eg. "davix-vmwarek")
   # $4 = rootfs unique name
   # $5 = build top
-  define VMDX_Kit
+  # $6 = extra kit dependencies
+  define VMDK_Kit
 
-    $(if $($1_VMDX_KIT_SOURCE_FILES),$(error Called VMDX_Kit with non-unique name $1))
+    $(if $($1_VMDK_KIT_SOURCE_FILES),$(error Called VMDK_Kit with non-unique name $1))
 
-    $1_VMDX_KIT_SOURCE_FILES := crossplex was here
+    $(eval $(call Configure_TargetFS,$1/playerkit,$5,PATH,STRIP LDD))
+    $(eval $(call TargetFS_Template,$1/playerkit,$(shell pwd)/fs-template/VMDK))
 
-    $5/$1/$1.raw: $($2_qemu_TARGETS) $($2_util-linux_TARGETS) $($1_TARGETFS_TARGETS)
-	genext2fs -b 1024 -d src -D device_table.txt flashdisk.img
-        #qemu-img create -f raw $$@ 1GB
-        #for ldev in /dev/loop0 /dev/loop1 /dev/loop2; do losetup $ldev > /dev/null 2>&1; if [ $? -ne 0 ]; then echo $ldev OK; break; fi; done
+    $1_VMDK_KIT_SOURCE_FILES := crossplex was here
 
-    $5/$1/$1.vmdx: $($2_qemu_TARGETS) $5/$1/$1.raw
+#    $5/$1/$1.raw: LOOPBACK_DEV := $(shell for ldev in /dev/loop*; do sudo /sbin/losetup $$ldev > /dev/null 2>&1; if [ $$? -ne 0 ]; then echo $$ldev; break; fi; done)
+
+    $5/$1/$1.raw: $($2_TARGETFS_PREFIX)/bin/qemu-img $($2_TARGETFS_PREFIX)/sbin/sfdisk
+	# Clean up any previous builds
+	rm -rf $$@
+	# Create a blank image of a disk
+	$($2_TARGETFS_PREFIX)/bin/qemu-img create -f raw $$@ 1GB
+	# Create one Linux partition on the whole device
+	(echo "0,130,83,*" ; echo ";") | $($2_TARGETFS_PREFIX)/sbin/sfdisk -D $$@ -H 255 -S 63
+
+    $5/$1/$1.partition: $($2_TARGETFS_PREFIX)/sbin/kpartx
+
+    $5/$1/$1.partition: $5/$1/$1.raw
+	# Tell the kernel about the partitions
+	sudo $($2_TARGETFS_PREFIX)/sbin/kpartx -s -v -a $$< | cut -f3 -d" " > $$@
+
+    $5/$1/$1.loop: $5/$1/$1.partition
+	# Discover the name of the loopback device this partition is on
+	cut -f1,2 -dp < $$< > $$@
+
+    $5/$1/$1.ext2fs: $($2_TARGETFS_PREFIX)/bin/genext2fs
+
+    $(sort $(dir $(call Complete_Targetfs_Target_List,$4))): $(call Complete_Targetfs_Target_List,$4)
+
+    $(call Targetfs_Prefix_Of,$4)/boot/vmlinuz: $($3_KERNEL_BZIMAGE_FILENAME)
+	# Install the kernel in the target filesystem
+	mkdir -p $$(@D)
+	cp -f $$< $$@
+	chmod +x $$@
+
+    $5/$1/$1.ext2fs: $(call Complete_Targetfs_Target_List,$4) | $(sort $(dir $(call Complete_Targetfs_Target_List,$4)))
+    $5/$1/$1.ext2fs: $(call Targetfs_Prefix_Of,$4)/boot/vmlinuz
+
+    $(call Targetfs_Prefix_Of,$4)/boot/grub/device.map: $5/$1/$1.loop
+	# Tell grub where the disk image is looped
+	mkdir -p $$(@D)
+	echo "(hd0) /dev/`cat $5/$1/$1.loop`" > $$@
+
+    $(call Targetfs_Prefix_Of,$4)/boot/grub/core.img: $($2_grub_TARGETS)
+#	# Copy the grub2 module files
+	mkdir -p $$(@D)
+	cp -f $($2_TARGETFS_PREFIX)/lib/grub/i386-pc/*[.mod,.img,.lst] $(call Targetfs_Prefix_Of,$4)/boot/grub
+	# Build grub2's core.img file
+	sudo $($2_TARGETFS_PREFIX)/bin/grub-mkimage --output=$$@ --prefix=/boot/grub $(GRUB_MODULES)
+
+    $5/$1/$1.ext2fs: $5/$1/$1.partition $6 $(call Targetfs_Prefix_Of,$4)/boot/grub/core.img $($2_grub_TARGETS)
+	# Create an ext2fs filesystem on the mapped partition
+	sudo $($2_TARGETFS_PREFIX)/bin/genext2fs -b 8192 -d $(call Targetfs_Prefix_Of,$4) /dev/mapper/`cat $$<`
+
+    $5/$1/$1.grub-setup: $($2_grub_TARGETS)
+    $5/$1/$1.grub-setup: $(call Targetfs_Prefix_Of,$4)/boot/grub/core.img
+    $5/$1/$1.grub-setup: $(call Targetfs_Prefix_Of,$4)/boot/grub/device.map 
+    $5/$1/$1.grub-setup: $5/$1/$1.ext2fs $5/$1/$1.partition $5/$1/$1.loop 
+	# Install grub2 the disk image's MBR
+	sudo $($2_TARGETFS_PREFIX)/sbin/grub-setup -v --directory=$(call Targetfs_Prefix_Of,$4)/boot/grub --device-map=$(call Targetfs_Prefix_Of,$4)/boot/grub/device.map --root-device='(hd0,1)' '(hd0)'
 	touch $$@
 
-    $1/VMDX_FILENAME := $5/$1/$1.vmdx
+    $5/$1/$1.grub-install: $($2_grub_TARGETS) $5/$1/$1.ext2fs $5/$1/$1.partition $5/$1/$1.loop
+	# Install grub2 the disk image's MBR
+	sudo $($2_TARGETFS_PREFIX)/sbin/grub-install -v --modules=$(GRUB_MODULES) --root-directory=$(call Targetfs_Prefix_Of,$4) '(hd0)'
+	touch $$@
+
+    $5/$1/$1.cleanup: 
+	# Tell the kernel to remove the partitions
+	-if [ -f $5/$1/$1.raw ] ; then sudo $($2_TARGETFS_PREFIX)/sbin/kpartx -s -v -d $5/$1/$1.raw ; fi
+	-if [ -f $5/$1/$1 ] ; then sudo $($2_TARGETFS_PREFIX)/sbin/kpartx -s -v -d /dev/mapper`cat $5/$1/$1` ; fi
+	-if [ -f $5/$1/$1.loop ] ; then sudo $($2_TARGETFS_PREFIX)/sbin/kpartx -s -v -d /dev/`cat $5/$1/$1.loop` ; fi
+	-if [ -f $5/$1/$1.loop ] ; then sudo $($2_TARGETFS_PREFIX)/sbin/losetup -d /dev/`cat $5/$1/$1.loop` ; fi
+
+    $5/$1/$1-clean: $5/$1/$1.cleanup
+	rm -f $5/$1/$1.loop $5/$1/$1.partition $5/$1/$1.grub-setup $5/$1/$1.grub-install $5/$1/$1.raw $5/$1/$1.ext2fs
+
+    $5/$1/playerkit/$1.vmdk: $($1/playerkit_TARGETFS_TARGETS)
+
+    $5/$1/playerkit/$1.vmdk: $($2_TARGETFS_PREFIX)/bin/qemu-img
+
+    $5/$1/playerkit/$1.vmdk: $5/$1/$1.raw $5/$1/$1.grub-setup
+	# Convert the raw image to a VMware image
+	$($2_TARGETFS_PREFIX)/bin/qemu-img convert -O vmdk $$< $$@ 
+
+    $1/VMDK_FILENAME := $5/$1/playerkit/$1.vmdk
 
   endef
 

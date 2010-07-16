@@ -1,0 +1,410 @@
+diff -Nur grub-1.98/conf/any-emu.mk grub-1.98-dave/conf/any-emu.mk
+--- grub-1.98/conf/any-emu.mk	2010-03-06 12:52:26.000000000 -0800
++++ grub-1.98-dave/conf/any-emu.mk	2010-07-13 10:46:50.000000000 -0700
+@@ -690,7 +690,7 @@
+ 	$(CC) -Ignulib -I$(srcdir)/gnulib $(CPPFLAGS) $(CFLAGS) -DGRUB_UTIL=1 $(grub_emu_CFLAGS) -MD -c -o $@ $<
+ -include grub_emu-gnulib_progname.d
+ 
+-grub_emu_CFLAGS += -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++grub_emu_CFLAGS +=  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ 
+ 
+ ifeq ($(target_cpu), i386)
+diff -Nur grub-1.98/conf/any-emu.rmk grub-1.98-dave/conf/any-emu.rmk
+--- grub-1.98/conf/any-emu.rmk	2010-03-06 12:51:37.000000000 -0800
++++ grub-1.98-dave/conf/any-emu.rmk	2010-07-13 10:47:12.000000000 -0700
+@@ -64,7 +64,7 @@
+ 	commands/parttool.c parttool/msdospart.c			\
+ 	lib/libgcrypt-grub/cipher/md5.c \
+ 	grub_emu_init.c gnulib/progname.c
+-grub_emu_CFLAGS += -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++grub_emu_CFLAGS +=  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ 
+ 
+ ifeq ($(target_cpu), i386)
+diff -Nur grub-1.98/conf/common.mk grub-1.98-dave/conf/common.mk
+--- grub-1.98/conf/common.mk	2010-03-06 12:52:26.000000000 -0800
++++ grub-1.98-dave/conf/common.mk	2010-07-13 10:46:45.000000000 -0700
+@@ -11893,7 +11893,7 @@
+ 	$(CC) -Ikern -I$(srcdir)/kern $(CPPFLAGS) $(CFLAGS) -DGRUB_UTIL=1 $(grub_mkpasswd_pbkdf2_CFLAGS) -MD -c -o $@ $<
+ -include grub_mkpasswd_pbkdf2-kern_err.d
+ 
+-grub_mkpasswd_pbkdf2_CFLAGS += -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap -DGRUB_MKPASSWD=1
++grub_mkpasswd_pbkdf2_CFLAGS +=  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap -DGRUB_MKPASSWD=1
+ 
+ include $(srcdir)/conf/gcry.mk
+ grub-mkdevicemap: $(grub_mkdevicemap_DEPENDENCIES) $(grub_mkdevicemap_OBJECTS)
+diff -Nur grub-1.98/conf/common.rmk grub-1.98-dave/conf/common.rmk
+--- grub-1.98/conf/common.rmk	2010-03-06 12:51:37.000000000 -0800
++++ grub-1.98-dave/conf/common.rmk	2010-07-13 10:47:06.000000000 -0700
+@@ -777,6 +777,6 @@
+ 
+ bin_UTILITIES += grub-mkpasswd-pbkdf2
+ grub_mkpasswd_pbkdf2_SOURCES = gnulib/progname.c gnulib/getdelim.c gnulib/getline.c util/grub-mkpasswd-pbkdf2.c lib/crypto.c lib/libgcrypt-grub/cipher/sha512.c lib/pbkdf2.c util/misc.c kern/err.c
+-grub_mkpasswd_pbkdf2_CFLAGS += -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap -DGRUB_MKPASSWD=1
++grub_mkpasswd_pbkdf2_CFLAGS +=  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap -DGRUB_MKPASSWD=1
+ 
+ include $(srcdir)/conf/gcry.mk
+diff -Nur grub-1.98/conf/gcry.mk grub-1.98-dave/conf/gcry.mk
+--- grub-1.98/conf/gcry.mk	2010-03-06 12:52:26.000000000 -0800
++++ grub-1.98-dave/conf/gcry.mk	2010-07-13 10:46:36.000000000 -0700
+@@ -97,7 +97,7 @@
+ video-gcry_whirlpool_mod-lib_libgcrypt_grub_cipher_whirlpool.lst: lib/libgcrypt-grub/cipher/whirlpool.c $(lib/libgcrypt-grub/cipher/whirlpool.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_whirlpool_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_whirlpool > $@ || (rm -f $@; exit 1)
+ 
+-gcry_whirlpool_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_whirlpool_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_whirlpool_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/twofish.c
+@@ -195,7 +195,7 @@
+ video-gcry_twofish_mod-lib_libgcrypt_grub_cipher_twofish.lst: lib/libgcrypt-grub/cipher/twofish.c $(lib/libgcrypt-grub/cipher/twofish.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_twofish_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_twofish > $@ || (rm -f $@; exit 1)
+ 
+-gcry_twofish_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_twofish_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_twofish_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/tiger.c
+@@ -293,7 +293,7 @@
+ video-gcry_tiger_mod-lib_libgcrypt_grub_cipher_tiger.lst: lib/libgcrypt-grub/cipher/tiger.c $(lib/libgcrypt-grub/cipher/tiger.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_tiger_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_tiger > $@ || (rm -f $@; exit 1)
+ 
+-gcry_tiger_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_tiger_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_tiger_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha512.c
+@@ -391,7 +391,7 @@
+ video-gcry_sha512_mod-lib_libgcrypt_grub_cipher_sha512.lst: lib/libgcrypt-grub/cipher/sha512.c $(lib/libgcrypt-grub/cipher/sha512.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_sha512_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_sha512 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_sha512_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha512_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha512_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha256.c
+@@ -489,7 +489,7 @@
+ video-gcry_sha256_mod-lib_libgcrypt_grub_cipher_sha256.lst: lib/libgcrypt-grub/cipher/sha256.c $(lib/libgcrypt-grub/cipher/sha256.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_sha256_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_sha256 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_sha256_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha256_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha256_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha1.c
+@@ -587,7 +587,7 @@
+ video-gcry_sha1_mod-lib_libgcrypt_grub_cipher_sha1.lst: lib/libgcrypt-grub/cipher/sha1.c $(lib/libgcrypt-grub/cipher/sha1.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_sha1_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_sha1 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_sha1_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha1_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha1_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/serpent.c
+@@ -685,7 +685,7 @@
+ video-gcry_serpent_mod-lib_libgcrypt_grub_cipher_serpent.lst: lib/libgcrypt-grub/cipher/serpent.c $(lib/libgcrypt-grub/cipher/serpent.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_serpent_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_serpent > $@ || (rm -f $@; exit 1)
+ 
+-gcry_serpent_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_serpent_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_serpent_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/seed.c
+@@ -783,7 +783,7 @@
+ video-gcry_seed_mod-lib_libgcrypt_grub_cipher_seed.lst: lib/libgcrypt-grub/cipher/seed.c $(lib/libgcrypt-grub/cipher/seed.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_seed_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_seed > $@ || (rm -f $@; exit 1)
+ 
+-gcry_seed_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_seed_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_seed_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rsa.c
+@@ -882,7 +882,7 @@
+ video-gcry_rmd160_mod-lib_libgcrypt_grub_cipher_rmd160.lst: lib/libgcrypt-grub/cipher/rmd160.c $(lib/libgcrypt-grub/cipher/rmd160.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_rmd160_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_rmd160 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_rmd160_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rmd160_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rmd160_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rmd.h
+@@ -981,7 +981,7 @@
+ video-gcry_rijndael_mod-lib_libgcrypt_grub_cipher_rijndael.lst: lib/libgcrypt-grub/cipher/rijndael.c $(lib/libgcrypt-grub/cipher/rijndael.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_rijndael_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_rijndael > $@ || (rm -f $@; exit 1)
+ 
+-gcry_rijndael_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rijndael_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rijndael_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rijndael-tables.h
+@@ -1080,7 +1080,7 @@
+ video-gcry_rfc2268_mod-lib_libgcrypt_grub_cipher_rfc2268.lst: lib/libgcrypt-grub/cipher/rfc2268.c $(lib/libgcrypt-grub/cipher/rfc2268.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_rfc2268_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_rfc2268 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_rfc2268_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rfc2268_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rfc2268_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/primegen.c
+@@ -1179,7 +1179,7 @@
+ video-gcry_md5_mod-lib_libgcrypt_grub_cipher_md5.lst: lib/libgcrypt-grub/cipher/md5.c $(lib/libgcrypt-grub/cipher/md5.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_md5_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_md5 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_md5_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_md5_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_md5_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/md4.c
+@@ -1277,7 +1277,7 @@
+ video-gcry_md4_mod-lib_libgcrypt_grub_cipher_md4.lst: lib/libgcrypt-grub/cipher/md4.c $(lib/libgcrypt-grub/cipher/md4.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_md4_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_md4 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_md4_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_md4_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_md4_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/hash-common.h
+@@ -1379,7 +1379,7 @@
+ video-gcry_des_mod-lib_libgcrypt_grub_cipher_des.lst: lib/libgcrypt-grub/cipher/des.c $(lib/libgcrypt-grub/cipher/des.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_des_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_des > $@ || (rm -f $@; exit 1)
+ 
+-gcry_des_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_des_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_des_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/crc.c
+@@ -1477,7 +1477,7 @@
+ video-gcry_crc_mod-lib_libgcrypt_grub_cipher_crc.lst: lib/libgcrypt-grub/cipher/crc.c $(lib/libgcrypt-grub/cipher/crc.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_crc_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_crc > $@ || (rm -f $@; exit 1)
+ 
+-gcry_crc_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_crc_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_crc_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/cast5.c
+@@ -1575,7 +1575,7 @@
+ video-gcry_cast5_mod-lib_libgcrypt_grub_cipher_cast5.lst: lib/libgcrypt-grub/cipher/cast5.c $(lib/libgcrypt-grub/cipher/cast5.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_cast5_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_cast5 > $@ || (rm -f $@; exit 1)
+ 
+-gcry_cast5_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_cast5_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_cast5_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/camellia.h
+@@ -1713,7 +1713,7 @@
+ video-gcry_camellia_mod-lib_libgcrypt_grub_cipher_camellia.lst: lib/libgcrypt-grub/cipher/camellia.c $(lib/libgcrypt-grub/cipher/camellia.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_camellia_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_camellia > $@ || (rm -f $@; exit 1)
+ 
+-gcry_camellia_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_camellia_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_camellia_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/blowfish.c
+@@ -1811,7 +1811,7 @@
+ video-gcry_blowfish_mod-lib_libgcrypt_grub_cipher_blowfish.lst: lib/libgcrypt-grub/cipher/blowfish.c $(lib/libgcrypt-grub/cipher/blowfish.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_blowfish_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_blowfish > $@ || (rm -f $@; exit 1)
+ 
+-gcry_blowfish_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_blowfish_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_blowfish_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/bithelp.h
+@@ -1910,6 +1910,6 @@
+ video-gcry_arcfour_mod-lib_libgcrypt_grub_cipher_arcfour.lst: lib/libgcrypt-grub/cipher/arcfour.c $(lib/libgcrypt-grub/cipher/arcfour.c_DEPENDENCIES) genvideolist.sh
+ 	set -e; 	  $(TARGET_CC) -Ilib/libgcrypt-grub/cipher -I$(srcdir)/lib/libgcrypt-grub/cipher $(TARGET_CPPFLAGS)  $(TARGET_CFLAGS) $(gcry_arcfour_mod_CFLAGS) -E $< 	  | sh $(srcdir)/genvideolist.sh gcry_arcfour > $@ || (rm -f $@; exit 1)
+ 
+-gcry_arcfour_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_arcfour_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_arcfour_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+diff -Nur grub-1.98/conf/gcry.rmk grub-1.98-dave/conf/gcry.rmk
+--- grub-1.98/conf/gcry.rmk	2010-03-06 12:52:26.000000000 -0800
++++ grub-1.98-dave/conf/gcry.rmk	2010-07-13 10:46:59.000000000 -0700
+@@ -4,83 +4,83 @@
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/whirlpool.c
+ pkglib_MODULES += gcry_whirlpool.mod
+ gcry_whirlpool_mod_SOURCES = lib/libgcrypt-grub/cipher/whirlpool.c
+-gcry_whirlpool_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_whirlpool_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_whirlpool_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/twofish.c
+ pkglib_MODULES += gcry_twofish.mod
+ gcry_twofish_mod_SOURCES = lib/libgcrypt-grub/cipher/twofish.c
+-gcry_twofish_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_twofish_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_twofish_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/tiger.c
+ pkglib_MODULES += gcry_tiger.mod
+ gcry_tiger_mod_SOURCES = lib/libgcrypt-grub/cipher/tiger.c
+-gcry_tiger_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_tiger_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_tiger_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha512.c
+ pkglib_MODULES += gcry_sha512.mod
+ gcry_sha512_mod_SOURCES = lib/libgcrypt-grub/cipher/sha512.c
+-gcry_sha512_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha512_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha512_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha256.c
+ pkglib_MODULES += gcry_sha256.mod
+ gcry_sha256_mod_SOURCES = lib/libgcrypt-grub/cipher/sha256.c
+-gcry_sha256_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha256_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha256_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/sha1.c
+ pkglib_MODULES += gcry_sha1.mod
+ gcry_sha1_mod_SOURCES = lib/libgcrypt-grub/cipher/sha1.c
+-gcry_sha1_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_sha1_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_sha1_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/serpent.c
+ pkglib_MODULES += gcry_serpent.mod
+ gcry_serpent_mod_SOURCES = lib/libgcrypt-grub/cipher/serpent.c
+-gcry_serpent_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_serpent_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_serpent_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/seed.c
+ pkglib_MODULES += gcry_seed.mod
+ gcry_seed_mod_SOURCES = lib/libgcrypt-grub/cipher/seed.c
+-gcry_seed_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_seed_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_seed_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rsa.c
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rmd160.c
+ pkglib_MODULES += gcry_rmd160.mod
+ gcry_rmd160_mod_SOURCES = lib/libgcrypt-grub/cipher/rmd160.c
+-gcry_rmd160_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rmd160_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rmd160_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rmd.h
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rijndael.c
+ pkglib_MODULES += gcry_rijndael.mod
+ gcry_rijndael_mod_SOURCES = lib/libgcrypt-grub/cipher/rijndael.c
+-gcry_rijndael_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rijndael_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rijndael_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rijndael-tables.h
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/rfc2268.c
+ pkglib_MODULES += gcry_rfc2268.mod
+ gcry_rfc2268_mod_SOURCES = lib/libgcrypt-grub/cipher/rfc2268.c
+-gcry_rfc2268_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_rfc2268_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_rfc2268_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/primegen.c
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/md5.c
+ pkglib_MODULES += gcry_md5.mod
+ gcry_md5_mod_SOURCES = lib/libgcrypt-grub/cipher/md5.c
+-gcry_md5_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_md5_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_md5_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/md4.c
+ pkglib_MODULES += gcry_md4.mod
+ gcry_md4_mod_SOURCES = lib/libgcrypt-grub/cipher/md4.c
+-gcry_md4_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_md4_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_md4_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/hash-common.h
+@@ -90,19 +90,19 @@
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/des.c
+ pkglib_MODULES += gcry_des.mod
+ gcry_des_mod_SOURCES = lib/libgcrypt-grub/cipher/des.c
+-gcry_des_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_des_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_des_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/crc.c
+ pkglib_MODULES += gcry_crc.mod
+ gcry_crc_mod_SOURCES = lib/libgcrypt-grub/cipher/crc.c
+-gcry_crc_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_crc_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_crc_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/cast5.c
+ pkglib_MODULES += gcry_cast5.mod
+ gcry_cast5_mod_SOURCES = lib/libgcrypt-grub/cipher/cast5.c
+-gcry_cast5_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_cast5_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_cast5_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/camellia.h
+@@ -110,19 +110,19 @@
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/camellia-glue.c
+ pkglib_MODULES += gcry_camellia.mod
+ gcry_camellia_mod_SOURCES = lib/libgcrypt-grub/cipher/camellia-glue.c lib/libgcrypt-grub/cipher/camellia.c
+-gcry_camellia_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_camellia_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_camellia_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/blowfish.c
+ pkglib_MODULES += gcry_blowfish.mod
+ gcry_blowfish_mod_SOURCES = lib/libgcrypt-grub/cipher/blowfish.c
+-gcry_blowfish_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_blowfish_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_blowfish_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/bithelp.h
+ MAINTAINER_CLEANFILES += $(srcdir)/lib/libgcrypt-grub/cipher/arcfour.c
+ pkglib_MODULES += gcry_arcfour.mod
+ gcry_arcfour_mod_SOURCES = lib/libgcrypt-grub/cipher/arcfour.c
+-gcry_arcfour_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
++gcry_arcfour_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap
+ gcry_arcfour_mod_LDFLAGS = $(COMMON_LDFLAGS)
+ 
+diff -Nur grub-1.98/util/import_gcry.py grub-1.98-dave/util/import_gcry.py
+--- grub-1.98/util/import_gcry.py	2010-03-06 12:51:37.000000000 -0800
++++ grub-1.98-dave/util/import_gcry.py	2010-07-13 10:46:27.000000000 -0700
+@@ -279,7 +279,7 @@
+             conf.write ("pkglib_MODULES += %s.mod\n" % modname)
+             conf.write ("%s_mod_SOURCES = %s\n" %\
+                             (modname, modfiles))
+-            conf.write ("%s_mod_CFLAGS = $(COMMON_CFLAGS) -Wno-missing-field-initializers -Wno-error -I$(srcdir)/lib/libgcrypt_wrap\n" % modname)
++            conf.write ("%s_mod_CFLAGS = $(COMMON_CFLAGS)  -Wno-error -I$(srcdir)/lib/libgcrypt_wrap\n" % modname)
+             conf.write ("%s_mod_LDFLAGS = $(COMMON_LDFLAGS)\n\n" % modname)
+         elif isc and cipher_file != "camellia.c":
+             print ("WARNING: C file isn't a module: %s" % cipher_file)
+--- grub-1.98/configure~	2010-03-06 12:52:24.000000000 -0800
++++ grub-1.98/configure	2010-07-13 11:02:45.000000000 -0700
+@@ -8258,7 +8258,7 @@
+ LIBS=""
+ 
+ # debug flags.
+-TARGET_CFLAGS="$TARGET_CFLAGS -Wall -W -Wshadow -Wpointer-arith -Wmissing-prototypes \
++TARGET_CFLAGS="$TARGET_CFLAGS -Wshadow -Wpointer-arith -Wmissing-prototypes \
+                -Wundef -Wstrict-prototypes -g"
+ 
+ # Force no alignment to save space on i386.
+--- grub-1.98/Makefile.in~	2010-03-06 12:51:37.000000000 -0800
++++ grub-1.98/Makefile.in	2010-07-13 11:02:58.000000000 -0700
+@@ -81,7 +81,7 @@
+ CFLAGS = @CFLAGS@
+ ASFLAGS = @ASFLAGS@
+ LDFLAGS = @LDFLAGS@ $(LIBS)
+-CPPFLAGS = @CPPFLAGS@ -I$(builddir) -I$(builddir)/include -I$(srcdir)/gnulib -I$(srcdir)/include -Wall -W \
++CPPFLAGS = @CPPFLAGS@ -I$(builddir) -I$(builddir)/include -I$(srcdir)/gnulib -I$(srcdir)/include \
+ 	 -DGRUB_LIBDIR=\"$(pkglibdir)\" -DLOCALEDIR=\"$(localedir)\"
+ TARGET_CC = @TARGET_CC@
+ TARGET_CFLAGS = @TARGET_CFLAGS@
+@@ -89,8 +89,7 @@
+ TARGET_MODULE_FORMAT = @TARGET_MODULE_FORMAT@
+ TARGET_APPLE_CC = @TARGET_APPLE_CC@
+ OBJCONV = @OBJCONV@
+-TARGET_CPPFLAGS = @TARGET_CPPFLAGS@ -I$(srcdir)/include -I$(builddir) -I$(builddir)/include \
+-	-Wall -W
++TARGET_CPPFLAGS = @TARGET_CPPFLAGS@ -I$(srcdir)/include -I$(builddir) -I$(builddir)/include
+ TARGET_LDFLAGS = @TARGET_LDFLAGS@
+ TARGET_IMG_LDSCRIPT = @TARGET_IMG_LDSCRIPT@
+ TARGET_IMG_LDFLAGS = @TARGET_IMG_LDFLAGS@
