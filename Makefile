@@ -116,7 +116,8 @@ Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: .
 	rm -rf Ubuntu-JeOS-Dev-$(VERSION) Ubuntu-JeOS-Dev
 	tar xvjf "$(VMGUEST_TARBALL)"
 	mv Ubuntu-JeOS-Dev Ubuntu-JeOS-Dev-$(VERSION)
-	/usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
+	printenv
+	strace -ff -ovmrun.strace /usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/scp -i id_cpbuild ../$(VERSION).tbz crossplex@$(BUILD_GUEST_IP):
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
