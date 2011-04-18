@@ -43,7 +43,7 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/pkg-config-0.23.tar.gz,http://
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/syslinux-3.83.tar.gz,ftp://ftp.kernel.org/pub/linux/utils/boot/syslinux/3.xx/syslinux-3.83.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/termcap-1.3.1.tar.gz,ftp://ftp.gnu.org/gnu/termcap/termcap-1.3.1.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/Python-2.6.1.tar.bz2,http://www.python.org/ftp/python/2.6.1/Python-2.6.1.tgz))
-$(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/cdrtools-2.01.01a75.tar.gz,ftp://ftp.berlios.de/pub/cdrecord/alpha/cdrtools-2.01.01a75.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/cdrtools-3.00.tar.bz2,ftp://ftp.berlios.de/pub/cdrecord/cdrtools-3.00.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/nasm-2.07.tar.gz,http://www.nasm.us/pub/nasm/releasebuilds/2.07/nasm-2.07.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/uClibc-0.9.30.1.tar.bz2,http://www.uclibc.org/downloads/uClibc-0.9.30.1.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/uClibc-0.9.31.tar.bz2,http://www.uclibc.org/downloads/uClibc-0.9.31.tar.bz2))
