@@ -6,7 +6,7 @@ $(eval $(call Configure_TargetFS,localhost/build-tools,$(BUILD_TOP),localhost/bu
 
 $(eval $(call TargetFS_Install_Autoconf,localhost/build-tools,termcap-1.3.1 pkg-config-0.23 Python-2.6.1 autoconf-2.64 libtool-2.2.4 automake-1.11,NOSTAGE UNIQBUILD NODESTDIR))
 $(eval $(call TargetFS_Install_Autoconf,localhost/build-tools,nasm-2.07,BUILDINSRC NOSTAGE UNIQBUILD NODESTDIR))
-$(eval $(call TargetFS_Install_Make,localhost/build-tools,syslinux-3.83 cdrtools-2.01.01a75,,default))
+$(eval $(call TargetFS_Install_Make,localhost/build-tools,syslinux-3.83 cdrtools-3.00,,default))
 
 DAVIX_BUILD_PATH          := $(call Toolchain_Path,host-tools):$(PATH)
 DAVIX_TOOLCHAIN_VERSIONS  := binutils-2.20 gcc-4.2.0 glibc-2.5 linux-2.6.28.7 gdb-6.8
