@@ -5,3 +5,5 @@ files/*
 *~
 \#*
 .#*
+make.out
+test
