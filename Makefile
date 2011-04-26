@@ -131,7 +131,7 @@ test-clean:
 	$(MAKE) install DESTDIR=$(TEST_PATH)
 	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
 
-BUILD_GUEST_IP=10.77.181.144
+BUILD_GUEST_IP=10.77.181.148
 VMGUEST_TARBALL=/nightly/dave/vmware/Ubuntu-JeOS-Dev.tbz
 
 Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: ../$(VERSION).tbz $(VMGUEST_TARBALL)
