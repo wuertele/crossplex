@@ -132,22 +132,23 @@ test-clean:
 	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
 
 BUILD_GUEST_IP=10.77.181.25
-VMGUEST_TARBALL=/nightly/dave/vmware/Ubuntu-JeOS-Dev-a4db519.tbz
+VMGUEST_NAME=Ubuntu-JeOS-Dev-a4db519
+VMGUEST_TARBALL=/nightly/dave/vmware/$(VMGUEST_NAME).tbz
 
-Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx Ubuntu-JeOS-Dev-$(VERSION).tbz: ../$(VERSION).tbz $(VMGUEST_TARBALL)
-	rm -rf Ubuntu-JeOS-Dev-$(VERSION) Ubuntu-JeOS-Dev
+$(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx $(VMGUEST_NAME)-$(VERSION).tbz: ../$(VERSION).tbz $(VMGUEST_TARBALL)
+	rm -rf $(VMGUEST_NAME)-$(VERSION) $(VMGUEST_NAME)
 	tar xvjf "$(VMGUEST_TARBALL)"
-	mv Ubuntu-JeOS-Dev Ubuntu-JeOS-Dev-$(VERSION)
-	env -i HOME=$(HOME) /usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
+	mv $(VMGUEST_NAME) $(VMGUEST_NAME)-$(VERSION)
+	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/scp -i id_cpbuild ../$(VERSION).tbz crossplex@$(BUILD_GUEST_IP):
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild "cd /home/crossplex/$(VERSION) && make install && shutdown -h now"
 	sleep 20
-	tar cvjf Ubuntu-JeOS-Dev-$(VERSION).tbz Ubuntu-JeOS-Dev-$(VERSION)
+	tar cvjf $(VMGUEST_NAME)-$(VERSION).tbz $(VMGUEST_NAME)-$(VERSION)
 
-test-build-vmrelease: Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx
-	env -i HOME=$(HOME) /usr/bin/vmrun start Ubuntu-JeOS-Dev-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
+test-build-vmrelease: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
