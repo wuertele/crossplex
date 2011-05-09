@@ -2051,7 +2051,10 @@ ifndef MODULE_DETAILS_LOADED
 
   fix-embedded-paths_INSTALLABLE_minimal += bin/fix-embedded-paths
 
+<<<<<<< variant A
+>>>>>>> variant B
 
+======= end
   # Busybox
 
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += busybox
@@ -2072,7 +2075,7 @@ ifndef MODULE_DETAILS_LOADED
   busybox_MAKE_INSTALL_ARGS += V=1
   busybox_MAKE_INSTALL_ARGS += install
 
-  busybox_POST_INSTALL_STEPS += cd $3$4/_install && find . | cpio -aplmdu $5
+  busybox_POST_INSTALL_STEPS += cd $3$4/_install && find . | cpio -aplmdu $5 && cd $3$4 && echo "busybox_unstripped" | cpio -aplmdu $5/bin
 
   busybox_RUNTIME_DEPENDENCIES += dev/console
   busybox_RUNTIME_DEPENDENCIES += dev/ptmx

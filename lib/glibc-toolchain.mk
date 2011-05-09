@@ -210,6 +210,7 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
     $2/toolchain_RUNTIMES  += glibc
     $2/toolchain_TOOLCHAIN += glibc
+    $2/toolchain_TOOLCHAIN_TARGET_TUPLE = $3
 
     $2_TOOLCHAIN_TARGETS = $($2/toolchain_TARGETFS_TARGETS)
 
@@ -245,6 +246,7 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
     $2/toolchain_RUNTIMES  += glibc
     $2/toolchain_TOOLCHAIN += glibc
+    $2/toolchain_TOOLCHAIN_TARGET_TUPLE = $3
 
     $2_TOOLCHAIN_TARGETS = $(patsubst $4/%,$($2/toolchain_TARGETFS_PREFIX)/%,$(foreach dirname,bin include lib share $3 libexec usr,$(wildcard $4/$(dirname))))
 
