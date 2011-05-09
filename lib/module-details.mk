@@ -2051,10 +2051,7 @@ ifndef MODULE_DETAILS_LOADED
 
   fix-embedded-paths_INSTALLABLE_minimal += bin/fix-embedded-paths
 
-<<<<<<< variant A
->>>>>>> variant B
 
-======= end
   # Busybox
 
   CONFIGURE_TOOLS_KNOWN_MAKE_MODULES += busybox

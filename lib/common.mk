@@ -33,12 +33,9 @@ ifndef COMMON_MAKE_INCLUDED
 
   # What am I running on?
   HOST_TUPLE		:= $(shell echo $$MACHTYPE)
-<<<<<<< variant A
->>>>>>> variant B
 ifeq ($(HOST_TUPLE),)
   $(error /bin/sh does not define MACHTYPE.  Either install a /bin/sh which does (like bash) or set MACHTYPE in your top-level makefile before including crossplex)
 endif
-======= end
 
   # take a list of paths from standard input, and COPY the files at those paths to equivalent paths rooted at the path in the following argument
   Cpio_Copy		:= /bin/cpio -apmdu
@@ -46,11 +43,8 @@ endif
   # take a list of paths from standard input, and LINK the files at those paths to equivalent paths rooted at the path in the following argument
   Cpio_Link		:= /bin/cpio -aplmdu
 
-<<<<<<< variant A
->>>>>>> variant B
 #  GIT := $(shell which git)
 
-======= end
   STAT := $(shell which stat)
 
   # Copy or Link a single file named $2 from directory $1 to directory $3.  If the device hosting directory $1 matches that for directory $3, use link, otherwise use copy.
