@@ -123,7 +123,7 @@ $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx $(VMGUEST_NAME)-$(VERSION).tbz: .
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild "cd /home/crossplex/$(VERSION) && make install && shutdown -h now"
 	sleep 20
-	tar cvjf $(VMGUEST_NAME)-$(VERSION).tbz $(VMGUEST_NAME)-$(VERSION)-$(VERSION)
+	tar cvjf $(VMGUEST_NAME)-$(VERSION).tbz $(VMGUEST_NAME)-$(VERSION)
 
 test-build-vmrelease: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
