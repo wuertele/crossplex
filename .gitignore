@@ -1,0 +1,9 @@
+lib/templates/Project-Makefile
+backups/*
+tmp/*
+files/*
+*~
+\#*
+.#*
+make.out
+test
