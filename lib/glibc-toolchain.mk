@@ -149,17 +149,21 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
   # $2 = list of sources
   Glibc_SRC_Plugins = SRC_PLUGIN=$(subst glibc-,glibc-ports-,$(filter glibc-%,$2)) $(if $(filter THREAD=linuxthreads,$1),SRC_PLUGIN=$(subst glibc-,glibc-linuxthreads-,$(filter glibc-%,$2)))
 
+  # $1 = list of build tags.  We're looking for the value of THREAD=
+  # $2 = list of sources
+  GCC_SRC_Plugins = SRC_PLUGIN=$(filter mpfr-%,$2) SRC_PLUGIN=$(filter gmp-%,$2)
+
   # $1 = list of sources
   Glibc_NeedSemH = $(and $(filter glibc-2.5,$1),$(filter gcc-3.4.6,$1),NEEDSEMH)
 
   INSTALL_KERNEL_HEADERS    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
   INSTALL_BINUTILS          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
-  INSTALL_GCC_CORE_NOSHARED = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED SYSROOT=$1/gcc-core-noshared-sysroot MAKEARGS=stage1 $5,,$6)
+  INSTALL_GCC_CORE_NOSHARED = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED SYSROOT=$1/gcc-core-noshared-sysroot MAKEARGS=stage1 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
   INSTALL_GLIBC_HEADERS     = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-headers-sysroot MAKEARGS=headers ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
   INSTALL_GLIBC_STARTFILES  = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-startfiles-sysroot MAKEARGS=startfiles ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
-  INSTALL_GCC_CORE_SHARED   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/gcc-core-withshared-libgcc-sysroot MAKEARGS=stage2 $5,,$6)
+  INSTALL_GCC_CORE_SHARED   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/gcc-core-withshared-libgcc-sysroot MAKEARGS=stage2 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
   INSTALL_GLIBC_FINAL       = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-final-sysroot ENV=-i MAKEARGS=final $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
-  INSTALL_GCC_FINAL         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5,,$6)
+  INSTALL_GCC_FINAL         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
   INSTALL_GDB               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
 
   # $1 = build top
