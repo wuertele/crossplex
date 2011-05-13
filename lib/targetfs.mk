@@ -328,7 +328,7 @@ endef
 
     $(if $($4/$5/$3_SOURCEPREPPED),,
 
-      TargetFS_Prep_Source_$1_$2_$3 = 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 
+      TargetFS_Prep_Source_$1_$2_$3 = 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7
 
       $(call Patchify_Rules,$3,$(UNPACKED_SOURCES),$(THIRD_PARTY)/$($2_LICENSE),$4,$5,$(PATCHES)/$($2_LICENSE),$6)
 
