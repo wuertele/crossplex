@@ -341,7 +341,7 @@ endef
 
       $4/$5/$3/.src_plugin_$(module)_linked: $4/$5/$3/.repliduplicated $$($4/$5/$(filter $(module)%,$7)_SOURCE_PREPARED)
 	rm -f $$@
-	cd $4/$5/$(filter $(module)%,$7) $(foreach path,$(or $($(module)_COPY_PATHS),.),&& find $(path) | cpio -aplmdu $$(@D)/$(or $($(module)_COPY_TARGET),.))
+	cd $4/$5/$(filter $(module)%,$7) $(foreach path,$(or $($(module)_COPY_PATHS),.),&& find $(path) | grep -v .repliduplicated | grep -v .unpacked | cpio -aplmdu $$(@D)/$(or $($(module)_COPY_TARGET),.))
 	touch $$@
 
 )))
@@ -375,8 +375,16 @@ endef
 
       .PHONY: $1_$2-build-dependencies
 
+      $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS:							# How to capture configuration information for build in a file
+	mkdir -p $$(@D)
+	@echo $($(notdir $(patsubst %/,%,$(dir $3)))_CONFIG_DETAILS) > $$@
+
+      $1_$2-build-dependencies $3$4/.built: $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS			# Capture configuration information for build in a file
+
       $1_$2-build-dependencies $3$4/.built: $($1_TARGETFS_TOOLCHAIN_TARGETS)				# can't build without a toolchain
       $1_$2-build-dependencies $3$4/.built: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
+      $1_$2-build-dependencies $3$4/.building: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
+
       $1_$2-build-dependencies $3$4/.built: $(patsubst %,$$($1_%_DEV_TARGETS),$($2_BUILD_DEPENDENCIES))	# these are the **_DEV_TARGETS (staged files) for each package that must be built before this one
       #this next line is a better version of the previous line.  maybe delete the previous line...
       $1_$2-build-dependencies $3$4/.built: $(foreach dependency,$($2_BUILD_DEPENDENCIES),$(call $1_TargetFS_Tool_SENTINEL,$(dependency))) 
@@ -400,7 +408,7 @@ endef
 	$(if $(filter NOCONFIGURE,$8),@echo skipping configure,cd $$(@D) && env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $3/configure $(if $7,$7,$$($3$4_CONFIGURE_OPTS)))
 	$(if $(filter $2_MAKE_ARGS%,$(.VARIABLES)),,
 	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D))
-	$(foreach arglist,$(filter $2_MAKE_ARGS%,$(.VARIABLES)),
+	$(foreach arglist,$(sort $(filter $2_MAKE_ARGS%,$(.VARIABLES))),
 	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) $(call $(arglist),$1,$8,$9))
 	$(call $2_POST_BUILD_STEPS,$1,$8,$3,$4,$9)
 	mv $$(@D)/.building $$@
@@ -464,16 +472,27 @@ endef
   # $3 = list of build tags (to get the CROSS tuple if any)
   TargetFS_Package_Installables = $(sort $(foreach set-of-targets,$(if $1,$(foreach tag,$1,$(patsubst %,$2_INSTALLABLE_%,$(tag))),$(filter $2_INSTALLABLE_%,$(.VARIABLES))),$(call $(set-of-targets),$(if $(filter TARGET=%,$3),$(subst TARGET=,,$(filter TARGET=%,$3))),$(if $(filter TARGET=%,$3),-))))
 
-  # $1 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir_Old = $(call cmerge,-,$(subst /,.,$(subst =,_,$1)))
+  # Generate a variable name for storing a unique targetfs build dir
+  # $1 = targetfs
+  # $2 = space-separated list of fields to filter and concatenate
+  TargetFS_Build_Dir_Var = $(call cmerge,-,$(subst /,.,buildsdir-name-$(foreach word,$2,$(subst UNIQBUILD,UNIQBUILD.$1,$(lastword $(subst =, ,$(word)))))))
 
-  # $1 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir_Weak = $(call dsubstr,$(call cmerge,-,$(subst /,.,$(foreach word,$1,$(lastword $(subst =, ,$(word)))))),1,240)
+  # Count the number of TargetFS_Build_Dir_Var variables defined with the first field in $2
+  # $1 = targetfs
+  # $2 = space-separated list of fields to filter and concatenate
+  TargetFS_Build_Dir_Var_Count = $(words $(filter $(call cmerge,-,$(subst /,.,$(subst UNIQBUILD,UNIQBUILD.$1,buildsdir-name-$(firstword $2))))%,$(.VARIABLES)))
 
-  # $1 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir_Core = $(call dsubstr,$(call cmerge,-,$(subst /,.,$(foreach word,$2,$(subst UNIQBUILD,UNIQBUILD.$1,$(lastword $(subst =, ,$(word))))))),1,240)
-  TargetFS_Build_Dir = $(call TargetFS_Build_Dir_Core,$1,$2)
-  TargetFS_Build_Dir_w = $(warning TargetFS_Build_Dir_Core_a($1,$2) = $(call TargetFS_Build_Dir_Core,$1,$2))$(warning TargetFS_Build_Dir_Weak($2) = $(call TargetFS_Build_Dir_Weak,$2))$(call TargetFS_Build_Dir_Core,$1,$2)
+  # Generate a directory name unique to the list of fields in $2, but using an incrementing "confX" string
+  # $1 = targetfs
+  # $2 = space-separated list of fields to filter and concatenate
+  TargetFS_Build_Dir_Counting = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(firstword $2)-conf$(call TargetFS_Build_Dir_Var_Count,$1,$2))
+
+  # Discover the directory name specifically defined to be unique to the list of fields in $2
+  # Create a new one if one doesn't exist yet.
+  # $1 = targetfs
+  # $2 = space-separated list of fields to filter and concatenate
+  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_Counting,$1,$2))$(eval $(call TargetFS_Build_Dir_Counting,$1,$2)_CONFIG_DETAILS = $1 $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
+
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
   # $2 = software module name (eg "syslinux")
@@ -567,8 +586,9 @@ endef
     $(patsubst %,$4/%,$6): $4/%: $3/%
 	@echo CrossPlex installing $$(<F) from $$(<D) to $$(@D)
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
-	$(if $(filter STRIP,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-strip $$@ || echo WARNING CANT STRIP $$@; fi)
-	$(if $(filter LDD,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) ldd $$@ || echo WARNING CANT LDD $$@; fi)
+	$(if $(filter STRIP,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-strip $$@ -o $$@.stripped || echo WARNING CANT STRIP $$@; if [ -f $$@.stripped ] ; then mv -f $$@.stripped $$@ ; fi ; fi)
+	-file $$@
+	$(if $(filter LDD,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) ldd $$@ || echo WARNING CANT LDD $$@; fi)
 
   endef
 
