@@ -1,4 +1,5 @@
 # -*- makefile -*-		fetch-sources.mk
+
 # dave@rokulabs.com		Thu Feb  4 07:12:45 2010
 # Steal This Program!!!
 
@@ -50,7 +51,8 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/uClibc-0.9.31.tar.bz2,http://
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/gmp-4.3.1.tar.bz2,ftp://ftp.sunet.se/pub/gnu/gmp/gmp-4.3.1.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/mpfr-2.4.2.tar.bz2,http://www.mpfr.org/mpfr-2.4.2/mpfr-2.4.2.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/qemu-0.12.4.tar.gz,http://download.savannah.gnu.org/releases/qemu/qemu-0.12.4.tar.gz))
-$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/util-linux-2.12r.tar.gz,ftp://ftp.kernel.org/pub/linux/utils/util-linux/util-linux-2.12r.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/util-linux-2.12r.tar.gz,ftp://ftp.kernel.org/pub/linux/utils/util-linux/v2.12/util-linux-2.12r.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/GPL/util-linux-2.19.1.tar.bz2,ftp://ftp.kernel.org/pub/linux/utils/util-linux/v2.19/util-linux-2.19.1.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/genext2fs-1.4.1.tar.gz,http://downloads.sourceforge.net/project/genext2fs/genext2fs/1.4.1/genext2fs-1.4.1.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/grub-1.96.tar.gz,ftp://alpha.gnu.org/gnu/grub/grub-1.96.tar.gz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/grub-1.98.tar.gz,ftp://alpha.gnu.org/gnu/grub/grub-1.98.tar.gz))

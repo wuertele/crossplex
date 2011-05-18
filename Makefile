@@ -121,6 +121,9 @@ test-dave1:
 
 /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk
 
+build-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk
+build-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx
+
 test-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/selfrep.vmdk
 test-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerkit/handmade.vmx
 	# test the result
@@ -129,7 +132,7 @@ test-vmplayer: /nightly/dave/crossplex/git/crossplex/test/build/selfrep/playerki
 test-clean:
 	rm -rf $(TEST_PATH)/lib
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
+#	$(MAKE) -C examples /nightly/dave/crossplex/git/crossplex/test/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
 
 BUILD_GUEST_IP=10.77.181.25
 VMGUEST_NAME=Ubuntu-JeOS-Dev-a4db519

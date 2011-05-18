@@ -1,0 +1,24 @@
+diff -Nur grub-1.98/conf/common.mk grub-1.98.dave/conf/common.mk
+--- grub-1.98/conf/common.mk	2011-05-17 14:21:33.000000000 -0700
++++ grub-1.98.dave/conf/common.mk	2011-05-17 14:18:41.000000000 -0700
+@@ -415,7 +415,7 @@
+ 
+ grub_mkisofs_CFLAGS = -D_FILE_OFFSET_BITS=64 				\
+ 	-I$(srcdir)/util/mkisofs/include				\
+-	-Wno-all -Werror
++	-Werror
+ 
+ # For grub-fstest.
+ util/grub-fstest.c_DEPENDENCIES = grub_fstest_init.h
+diff -Nur grub-1.98/conf/common.rmk grub-1.98.dave/conf/common.rmk
+--- grub-1.98/conf/common.rmk	2011-05-17 14:21:33.000000000 -0700
++++ grub-1.98.dave/conf/common.rmk	2011-05-17 14:18:49.000000000 -0700
+@@ -52,7 +52,7 @@
+ 	gnulib/error.c gnulib/progname.c
+ grub_mkisofs_CFLAGS = -D_FILE_OFFSET_BITS=64 				\
+ 	-I$(srcdir)/util/mkisofs/include				\
+-	-Wno-all -Werror
++	-Werror
+ 
+ # For grub-fstest.
+ util/grub-fstest.c_DEPENDENCIES = grub_fstest_init.h

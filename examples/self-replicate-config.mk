@@ -8,7 +8,7 @@ $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,termcap-1.3.1 p
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,nasm-2.07,BUILDINSRC NOSTAGE UNIQBUILD NODESTDIR))
 $(eval $(call TargetFS_Install_Make,localhost/sr-build-tools,syslinux-3.83 cdrtools-3.00,,default))
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,qemu-0.12.4,,minimal))
-$(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,util-linux-2.12r,BUILDINSRC,full))
+$(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,util-linux-2.19.1,BUILDINSRC,full))
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,grub-1.98,NOSTAGE NODESTDIR))
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,e2fsprogs-1.41.12,,basic))
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,genext2fs-1.4.1,,minimal))
