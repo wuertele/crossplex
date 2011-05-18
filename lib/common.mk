@@ -94,7 +94,7 @@ endif
 
   TagCond = $(if $(filter $1,$4),$(patsubst $1,$2,$(filter $1,$4)),$3)
 
-  crossplex_token := §
+  crossplex_token := ï½§
   crossplex_ten_token := $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) $(crossplex_token) 
   crossplex_lots_of_token := $(foreach a,$(crossplex_ten_token),         \
 			  $(foreach b,$(crossplex_ten_token),    \

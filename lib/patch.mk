@@ -44,6 +44,8 @@ define General_Unpack_Rule
 	cd $$(@D)-unpacking && $5 $$<
 	$(if $6,cd $$(@D)-unpacking && $6 $$< | cut -f1 -d/ | sort -u | perl -e '@a=<>; if ($$$$#a==0){chomp $$$$a[0]; system("echo $$$$a[0] > .archivedirname");}' )
 	cd `dirname $$(@D)-unpacking`; if [ -d $$(@D)-unpacking/$$(*F) ] && [ `ls $$(@D)-unpacking | wc -l` = 1 ]; then mv $$(@D)-unpacking/$$(*F) $$(@D) ; rm -rf $$(@D)-unpacking; else cd $$(@D)-unpacking; if [ -f .archivedirname ]; then mv `cat .archivedirname` $$(@D); rm -rf $$(@D)-unpacking; else mv $$(@D)-unpacking $$(@D); fi; fi
+	-$(foreach rulevar,$(filter CROSSPLEX_POST_UNPACK_RULE,$(.VARIABLES)),find $$(@D) -exec $($(rulevar)) {} \;)
+	-$(foreach rulevar,$(filter CROSSPLEX_POST_UNPACK_RULE_TYPE%,$(.VARIABLES)),find $$(@D) -type $(patsubst CROSSPLEX_POST_UNPACK_RULE_TYPE_%,%,$(rulevar)) -exec $($(rulevar)) {} \;)
 	echo crossplexwashere > $$@
 
 endef
@@ -85,7 +87,7 @@ define Patch_Rules_Core
 	$(if $(GIT),cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F))
 	rm -f $$(@D)/.unapplied-$$(*F)
 
-    # This is a system of unrolling patches.  It depends on $3/patchorder.mk properly ordering the unroll.
+    # This is a system of unrolling patches.  It depends on $(dir $3)/$3-patchorder.mk properly ordering the unroll.
     # This rule is ONLY invoked when called on a single .unapplied-XYZ file, which is ONLY done in the rule defined six lines up (for $3/.applied).
     $(patsubst $1/%.patch,$3/.unapplied-%,$(wildcard $1/*.patch)): $3/.unapplied-%: $1/%.patch
 	cd $$(@D) && patch --reverse -g 0 -f -p1 < $$(@D)/.applied-$$(*F)
@@ -101,7 +103,9 @@ define Patch_Rules_Core
 
     # The patchorder file is out of date if any of the files found here are newer than it.
     # Note that there might be other patches found by other invocations of this macro, so this dependency is cumulative.
-    $3/patchorder.mk: $(wildcard $1/*.patch)
+    $(dir $3)/$(notdir $3)-patchorder.mk: $(wildcard $1/*.patch)
+
+    .PRECIOUS: $(dir $3)/$(notdir $3)-patchorder.mk
 
     $(subst $(__crossplex_space),_,$1_$2_$3_NEW_OVERLAY_TARGETS) := $$(filter-out $$(SEEN_OVERLAY_TARGETS),$(patsubst $1/overlay/%,$3/%,$(shell find $1/overlay -type f -o -type l 2>/dev/null)))
 
@@ -138,7 +142,7 @@ define Patch_Rules
     $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean):
 	rm -rf $3
 
-    sourceclean: $1_$2_$3_$4_$(subst $(__crossplex_space),_,$5)_replidupliclean
+    sourceclean: $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean)
 
     $(call Patch_Rules_Core,$4/$1,$2,$3)
     $(foreach subdir,$5,$(call Patch_Rules_Core,$4/$1/$(subdir),$2,$3))
@@ -195,20 +199,24 @@ define Patch_Order_Rules
     $1_$2_$3_$4_UNIQUE_PATCH_ORDER_ARGS := $1 , $2
 
     # Specify a series of patches in which each individual patch application rule depends on the alphabetically previous one having been successfully applied
-    $2/patchorder.mk:
+    $(dir $2)/$(notdir $2)-patchorder.mk:
 	mkdir -p $$(@D)
 	perl -e 'foreach my $$$$index (1 .. $$$$#ARGV) { print $$$$ARGV[$$$$index], ": ", $$$$ARGV[$$$$index-1], "\n"; }' $$($2_PATCHES) > $$@
 	perl -e 'foreach (@ARGV) { $$$$_ =~ s/applied-/unapplied-/; } foreach my $$$$index (1 .. $$$$#ARGV) { print $$$$ARGV[$$$$index-1], ": ", $$$$ARGV[$$$$index], "\n"; }' $$($2_PATCHES) >> $$@
 
-    $2-compare/patchorder.mk:
+    .PRECIOUS: $(dir $2)/$(notdir $2)-patchorder.mk
+
+    $(dir $2)/$(notdir $2)-compare-patchorder.mk:
 	mkdir -p $$(@D)
 	perl -e 'foreach my $$$$index (1 .. $$$$#ARGV) { print $$$$ARGV[$$$$index], ": ", $$$$ARGV[$$$$index-1], "\n"; }' $$($2-compare_PATCHES) > $$@
 	perl -e 'foreach (@ARGV) { $$$$_ =~ s/applied-/unapplied-/; } foreach my $$$$index (1 .. $$$$#ARGV) { print $$$$ARGV[$$$$index-1], ": ", $$$$ARGV[$$$$index], "\n"; }' $$($2-compare_PATCHES) >> $$@
 
+    .PRECIOUS: $(dir $2)/$(notdir $2)-compare-patchorder.mk
+
     # As long as the user is not just doing "make clean", include the patch order rules we just defined
     ifneq "$(MAKECMDGOALS)" "clean"
       ifneq "$(MAKECMDGOALS)" "ultraclean"
-        include $2/patchorder.mk
+        include $(dir $2)/$(notdir $2)-patchorder.mk
       endif
     endif
 
@@ -217,7 +225,7 @@ define Patch_Order_Rules
     $2-source-prepared: $2/.repliduplicated $$($2_PATCHES) $$(sort $$($2_BUILD_CONFIGS))
 
     ifeq "$(MAKECMDGOALS)" "$2/new.patch"
-        include $2-compare/patchorder.mk
+        include $(dir $2)/$(notdir $2)-compare-patchorder.mk
         $2/new.patch: FORCE
     endif
 
