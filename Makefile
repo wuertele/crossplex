@@ -146,7 +146,7 @@ $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx $(VMGUEST_NAME)-$(VERSION).tbz: .
 	sleep 60
 	/usr/bin/scp -i id_cpbuild ../$(VERSION).tbz crossplex@$(BUILD_GUEST_IP):
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "tar xvjf $(VERSION).tbz && find $(VERSION) -exec touch {} \;"
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild "cd /home/crossplex/$(VERSION) && make install && shutdown -h now"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild "cd /home/crossplex/$(VERSION) && make install $(VM_MAKE_ARGS) && shutdown -h now"
 	sleep 20
 	tar cvjf $(VMGUEST_NAME)-$(VERSION).tbz $(VMGUEST_NAME)-$(VERSION)
 
