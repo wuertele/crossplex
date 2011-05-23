@@ -156,3 +156,15 @@ test-build-vmrelease: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
 
+test-vmbuild-vmware: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
+	sleep 60
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
+
+test-vmbuild-sbvmdk: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
+	sleep 60
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make sbvmdk > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
+
