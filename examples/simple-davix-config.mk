@@ -40,4 +40,4 @@ $(eval $(call Build_Linux_Kernel,davix/linux,$(DAVIX_LINUX_VERSION),$(BUILD_TOP)
 
 $(eval $(call LiveCD_Kit,davix/vmware-iso,localhost/build-tools,davix/linux,$(BUILD_TOP)))
 
-vmware: $(davix/vmware-iso_ISO_FILENAME)
+davix: $(davix/vmware-iso_ISO_FILENAME)
