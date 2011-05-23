@@ -105,7 +105,7 @@ TEST_PATH := $(shell pwd)/test
 test-build-examples:
 	rm -rf test
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples vmware udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
+	$(MAKE) -C examples davix udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
 
 test-self-build:
 	rm -rf test
@@ -153,10 +153,10 @@ $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx $(VMGUEST_NAME)-$(VERSION).tbz: .
 test-build-vmrelease: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make vmware udlinux > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make davix udlinux > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
 
-test-vmbuild-vmware: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+test-vmbuild-davix: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make davix > make.out 2>&1"
