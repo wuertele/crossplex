@@ -102,38 +102,6 @@ checkgit:
 
 TEST_PATH := $(shell pwd)/test
 
-test-build-examples:
-	rm -rf test
-	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples davix udlinux CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
-
-test-self-build:
-	rm -rf test
-	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples sbvmdk CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/  
-
-test-dave1:
-	$(MAKE) -C examples $(TEST_PATH)/build/localhost/work_PATH/grub-1.98-NOSTAGE-NODESTDIR/grub-1.98/.repliduplicated CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
-
-$(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk: lib/kit.mk
-	$(MAKE) test-clean
-	$(MAKE) -C examples sbvmdk CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
-
-$(TEST_PATH)/build/selfrep/playerkit/handmade.vmx: $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk
-
-build-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk
-build-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/handmade.vmx
-
-test-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk
-test-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/handmade.vmx
-	# test the result
-	vmplayer $(TEST_PATH)/build/selfrep/playerkit/handmade.vmx
-
-test-clean:
-	rm -rf $(TEST_PATH)/lib
-	$(MAKE) install DESTDIR=$(TEST_PATH)
-#	$(MAKE) -C examples $(TEST_PATH)/build/selfrep/selfrep-clean CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/
-
 BUILD_GUEST_IP=10.77.181.25
 VMGUEST_NAME=Ubuntu-JeOS-Dev-a4db519
 VMGUEST_TARBALL=/nightly/dave/vmware/$(VMGUEST_NAME).tbz
@@ -150,27 +118,79 @@ $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx $(VMGUEST_NAME)-$(VERSION).tbz: .
 	sleep 20
 	tar cvjf $(VMGUEST_NAME)-$(VERSION).tbz $(VMGUEST_NAME)-$(VERSION)
 
-test-build-vmrelease: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+
+# $1 = one of (davix, udlinux, sbvmdk)
+define Test_VMBuild
+  test-vm-scratchbuild-$1: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make davix udlinux > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make $1 > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
 
-test-vmbuild-davix: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
+  test-vm-scratchbuild: test-vm-scratchbuild-$1
+
+  test-vm: test-vm-scratchbuild
+
+  test-vm-rebuild-$1: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
 	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
 	sleep 60
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make davix > make.out 2>&1"
+	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make $1 > make.out 2>&1"
 	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
 
-test-vmbuild-udlinux: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
-	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
-	sleep 60
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make udlinux > make.out 2>&1"
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
+  test-vm-rebuild: test-vm-rebuild-$1
 
-test-vmbuild-sbvmdk: $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx
-	env -i HOME=$(HOME) /usr/bin/vmrun start $(VMGUEST_NAME)-$(VERSION)/Ubuntu-JeOS-Dev.vmx nogui
-	sleep 60
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l crossplex -i id_cpbuild "cd /home/crossplex/$(VERSION)/examples && perl -pe 's/#HTTP_PROXY/HTTP_PROXY/; s/#FTP_PROXY/FTP_PROXY/; s/myproxy.com/wwwgate0.mot.com/' fetch-sources.mk > fetch-sources.mk.new && mv fetch-sources.mk.new fetch-sources.mk && time make sbvmdk > make.out 2>&1"
-	/usr/bin/ssh $(BUILD_GUEST_IP) -l root -i id_cpbuild 'shutdown -h now'
+  test-vm: test-vm-rebuild
 
+  test: test-vm
+endef
+
+# $1 = one of (davix, udlinux, sbvmdk)
+define Test_HostBuild
+  test-host-scratchbuild-$1:
+	rm -rf $(TEST_PATH)
+	$(MAKE) install DESTDIR=$(TEST_PATH)
+	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
+
+  test-host-scratchbuild: test-host-scratchbuild-$1
+
+  test-host: test-host-scratchbuild
+
+  test-host-rebuild-$1:
+	$(MAKE) install DESTDIR=$(TEST_PATH)
+	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
+
+  test-host-rebuild: test-host-rebuild-$1
+
+  test-host: test-host-rebuild
+
+  test: test-host
+endef
+
+# $1 = one of (VM, Host)
+# $2 = one of (davix, udlinux, sbvmdk)
+define Test_Build
+
+  $(call Test_$1Build,$2)
+
+endef
+
+
+# Generate rules for all hosts and all targets
+#$(foreach host,Host,VM,$(foreach target,davix udlinux sbvmdk,$(eval $(call Test_Build,$(host),$(target)))))
+
+$(eval $(foreach target,sbvmdk davix udlinux,$(foreach where,VM Host,$(call Test_Build,$(where),$(target)))))
+
+
+#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),sbvmdk)))
+#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),davix)))
+#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),udlinux)))
+
+
+$(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk: lib/kit.mk
+$(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk: test-host-rebuild-sbvmdk
+$(TEST_PATH)/build/selfrep/playerkit/handmade.vmx: $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk
+
+test-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk
+test-vmplayer: $(TEST_PATH)/build/selfrep/playerkit/handmade.vmx
+	# test the result
+	vmplayer $(TEST_PATH)/build/selfrep/playerkit/handmade.vmx

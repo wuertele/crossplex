@@ -62,4 +62,6 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz,ftp://source
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/bash-4.1.tar.gz,ftp://ftp.cwru.edu/pub/bash/bash-4.1.tar.gz))
 
 $(THIRD_PARTY)/LGPL/LVM2-2.02.68.tgz: $(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz
-	cd /tmp && rm -rf LVM2-2.02.68 LVM2.2.02.68 && tar xvzf $< && mv LVM2.2.02.68 LVM2-2.02.68 && tar cvzf $@ LVM2-2.02.68
+	rm -rf $(THIRD_PARTY)/LGPL/LVM2-2.02.68-tmpunpack
+	mkdir -p $(THIRD_PARTY)/LGPL/LVM2-2.02.68-tmpunpack
+	cd $(THIRD_PARTY)/LGPL/LVM2-2.02.68-tmpunpack && tar xvzf $< && mv LVM2.2.02.68 LVM2-2.02.68 && tar cvzf $@ LVM2-2.02.68
