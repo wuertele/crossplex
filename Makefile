@@ -174,17 +174,8 @@ define Test_Build
 
 endef
 
-
 # Generate rules for all hosts and all targets
-#$(foreach host,Host,VM,$(foreach target,davix udlinux sbvmdk,$(eval $(call Test_Build,$(host),$(target)))))
-
 $(eval $(foreach target,sbvmdk davix udlinux,$(foreach where,VM Host,$(call Test_Build,$(where),$(target)))))
-
-
-#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),sbvmdk)))
-#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),davix)))
-#$(eval $(foreach where,Host,VM,$(call Test_Build,$(where),udlinux)))
-
 
 $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk: lib/kit.mk
 $(TEST_PATH)/build/selfrep/playerkit/selfrep.vmdk: test-host-rebuild-sbvmdk

@@ -60,6 +60,7 @@ $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/e2fsprogs-1.41.12.tar.gz,http:
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/multipath-tools-0.4.9.tar.bz2,http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.4.9.tar.bz2))
 $(eval $(call Download_Package,$(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz,ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.68.tgz))
 $(eval $(call Download_Package,$(THIRD_PARTY)/GPL/bash-4.1.tar.gz,ftp://ftp.cwru.edu/pub/bash/bash-4.1.tar.gz))
+$(eval $(call Download_Package,$(THIRD_PARTY)/REDIST_OK/zlib-1.2.5.tar.gz,http://zlib.net/zlib-1.2.5.tar.gz))
 
 $(THIRD_PARTY)/LGPL/LVM2-2.02.68.tgz: $(THIRD_PARTY)/LGPL/LVM2.2.02.68.tgz
 	rm -rf $(THIRD_PARTY)/LGPL/LVM2-2.02.68-tmpunpack

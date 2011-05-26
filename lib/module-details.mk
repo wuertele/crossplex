@@ -1860,7 +1860,12 @@ ifndef MODULE_DETAILS_LOADED
 
   qemu_LICENSE += GPL
 
-  qemu_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --disable-bluez
+  qemu_BUILD_DEPENDENCIES := zlib
+
+  qemu_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) QEMU_CFLAGS="-I$$($1_zlib_STAGE)/include" LDFLAGS="-L$($1_TARGETFS_PREFIX)/lib -L$($1_zlib_STAGE)/lib"
+
+  qemu_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/)
+  qemu_CONFIGURE_ARGS += --disable-bluez
 
   qemu_INSTALLABLE_minimal := bin/qemu-img
 

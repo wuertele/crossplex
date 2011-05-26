@@ -253,6 +253,7 @@ endef
 define Patchify_Rules
 
     $(call Unpack_Rules,$1,$2,$3)
+    $(foreach source_archive,$(SOURCE_ARCHIVE),$(call Unpack_Rules,$1,$2,$(source_archive)))
     $(call Patch_Rules,$1,$2/$1,$(if $5,$4/$5/$1,$4/$1),$6,$7)
     $(call Patch_Order_Rules,$1,$(if $5,$4/$5/$1,$4/$1))
 
