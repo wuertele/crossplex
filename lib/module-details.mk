@@ -1763,6 +1763,7 @@ ifndef MODULE_DETAILS_LOADED
 
   util-linux_CONFIGURE_ARGS = --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),/) --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE)
   util-linux_CONFIGURE_ARGS += --disable-makeinstall-chown
+  util-linux_CONFIGURE_ARGS += --without-ncurses
 
   util-linux_INSTALLABLE_full := 
   util-linux_INSTALLABLE_full += usr/share/misc/getopt/getopt-parse.bash
