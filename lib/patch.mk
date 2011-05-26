@@ -55,7 +55,7 @@ endef
 # $3 = package sources dir
 define Unpack_Rules
 
-  $1_$2_$3_DEBUG_UNPACK_RULES_ARGS := $1 , $2 , $3
+  # Unpack_Rules (1=$1, 2=$2, 3=$3)
 
   $(call General_Unpack_Rule,$1,$2,$3,.tar.gz,tar xvzf,tar tzf)
   $(call General_Unpack_Rule,$1,$2,$3,.tgz,tar xvzf,tar tzf)
@@ -72,6 +72,8 @@ endef
 # $2 = package unpack dir (e.g. "/some/path/to/unpacked-sources/dropbear-0.48.1")
 # $3 = package patch dir (e.g. "/some/other/path/to/patched-sources/dropbear-0.48.1")
 define Patch_Rules_Core
+
+    # Patch_Rules_Core (1=$1, 2=$2, 3=$3)
 
     $(subst $(__crossplex_space),_,$1_$2_$3_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3
     $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1)
@@ -107,14 +109,17 @@ define Patch_Rules_Core
 
     .PRECIOUS: $(dir $3)/$(notdir $3)-patchorder.mk
 
-    $(subst $(__crossplex_space),_,$1_$2_$3_NEW_OVERLAY_TARGETS) := $$(filter-out $$(SEEN_OVERLAY_TARGETS),$(patsubst $1/overlay/%,$3/%,$(shell find $1/overlay -type f -o -type l 2>/dev/null)))
-
-    # Here is the rule for overlaying the build-config files, if any are found
-    $$($1_$2_$3_NEW_OVERLAY_TARGETS): $3/%: $1/overlay/% $3/.repliduplicated
-	mkdir -p $$(@D)
-	cp -f $$< $$@
-
-    SEEN_OVERLAY_TARGETS += $$($1_$2_$3_NEW_OVERLAY_TARGETS)
+    # For every overlay_target, set a variable LATEST_OVERLAY_SOURCE_FOR_$(overlay_target).
+    # The final value of this variable will be used in the dependency for $(overlay_target).
+    # See below in Patch_Rules for where $3_OVERLAY_TARGETS and LATEST_OVERLAY_SOURCE_FOR_$(overlay_target) are used.
+    $$(foreach overlay_source, \
+               $(shell find $1/overlay -type f -o -type l 2>/dev/null), \
+               $$(if $$(LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source))), \
+                     $$(warning crossplex/patch.mk: $$(overlay_source) will override $$(LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) as existing rule for $$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) \
+                 ) \
+               $$(eval $3_OVERLAY_TARGETS += $$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) \
+               $$(eval LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source)) := $$(overlay_source)) \
+      )
 
 endef
 
@@ -126,9 +131,10 @@ endef
 # $5 = list of patch subdirs to check
 define Patch_Rules
 
-  ifndef $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS)
-    $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS) := $1 , $2 , $3 , $4 , $5
+  # Patch_Rules(1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
 
+  ifndef $(subst $(__crossplex_space),_,DEFINED_$3_REPLIDUPLICATED)
+    $(subst $(__crossplex_space),_,DEFINED_$3_REPLIDUPLICATED) := $3
     $3/.repliduplicated: $2/.unpacked
     ifeq ($2,$3)
 	cp -f $$< $$@
@@ -139,6 +145,19 @@ define Patch_Rules
 	touch $$@
     endif
 
+    $3-compare/.repliduplicated: $2/.unpacked
+    ifeq ($2,$3-compare)
+	cp -f $$< $$@
+    else
+	rm -rf $$(@D)
+	$(call Cpio_Findup,$2,$3-compare)
+	touch $$@
+    endif
+  endif
+
+  ifndef $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS)
+    $(subst $(__crossplex_space),_,$1_$2_$3_$4_UNIQUE_PATCH_ARGS) := $1 , $2 , $3 , $4 , $5
+
     $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean):
 	rm -rf $3
 
@@ -146,6 +165,14 @@ define Patch_Rules
 
     $(call Patch_Rules_Core,$4/$1,$2,$3)
     $(foreach subdir,$5,$(call Patch_Rules_Core,$4/$1/$(subdir),$2,$3))
+
+    # For each overlay_target defined in the above calls to Patch_Rules_Core, create a rule.
+    # There is a chance that another package with the exact same same patch tags coming from different
+    # patch hierarchies could collide here.  In that case you will see an error
+    # like "multiple rules for ..."
+    $$(foreach overlay_target,$$(sort $$($3_OVERLAY_TARGETS)),\
+               $$(eval $$(overlay_target): $$(LATEST_OVERLAY_SOURCE_FOR_$$(overlay_target)) $3/.repliduplicated; mkdir -p $$$$(@D); cp -f $$$$< $$$$@; ls -f $$$$@)\
+      )
 
     # Don't remove the ".applied-*" state files even though they may be intermediates
     .PRECIOUS: $3/.applied-%
@@ -160,17 +187,16 @@ define Patch_Rules
       endif
     endif
 
-    $3-compare/.repliduplicated: $2/.unpacked
-    ifeq ($2,$3-compare)
-	cp -f $$< $$@
-    else
-	rm -rf $$(@D)
-	$(call Cpio_Findup,$2,$3-compare)
-	touch $$@
-    endif
-
     $(call Patch_Rules_Core,$4/$1,$2,$3-compare)
     $(foreach subdir,$5,$(call Patch_Rules_Core,$4/$1/$(subdir),$2,$3-compare))
+
+    # For each overlay_target defined in the above calls to Patch_Rules_Core, create a rule.
+    # There is a chance that another package with the exact same same patch tags coming from different
+    # patch hierarchies could collide here.  In that case you will see an error
+    # like "multiple rules for ..."
+    $$(foreach overlay_target,$$(sort $$($3-compare_OVERLAY_TARGETS)),\
+               $$(eval $$(overlay_target): $$(LATEST_OVERLAY_SOURCE_FOR_$$(overlay_target)) $3-compare/.repliduplicated; mkdir -p $$$$(@D); cp -f $$$$< $$$$@)\
+      )
 
     # Don't remove the ".applied-*" state files even though they may be intermediates
     .PRECIOUS: $3-compare/.applied-%
@@ -194,6 +220,8 @@ endef
 # $2 = patched package dir (e.g. "/some/path/to/dropbear-0.48.1")
 # Only call this macro after Patch_Rules has been invoked on all appropriate directories, otherwise the list of patches will be incomplete.
 define Patch_Order_Rules
+
+  # Patch_Order_Rules(1=$1, 2=$2)
 
   ifndef $1_$2_$3_$4_UNIQUE_PATCH_ORDER_ARGS
     $1_$2_$3_$4_UNIQUE_PATCH_ORDER_ARGS := $1 , $2
@@ -245,16 +273,17 @@ endef
 
 # $1 = software package version (eg. gcc-4.2.0)
 # $2 = untar staging dir (eg /export/builds/unpacked-sources)
-# $3 = where is tarball found (eg /vobs/stb_common/bcm_kernel_impl/thirdparty/GPL)
+# $3 = list of places where tarball might be found (eg /path/to/GPLv2 /other/path/for/GPLv2)
 # $4 = build top (eg /export/builds/kernel)
 # $5 = OPTIONAL build nickname
 # $6 = where are patches found (eg /vobs/stb_common/bcm_kernel_impl/patches/GPL)
 # $7 = extra patch subdirs
 define Patchify_Rules
 
-    $(call Unpack_Rules,$1,$2,$3)
-    $(foreach source_archive,$(SOURCE_ARCHIVE),$(call Unpack_Rules,$1,$2,$(source_archive)))
-    $(call Patch_Rules,$1,$2/$1,$(if $5,$4/$5/$1,$4/$1),$6,$7)
+    # Patchify_Rules(1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6, 7=$7)
+
+    $(foreach tarball_path,$3,$(call Unpack_Rules,$1,$2,$(tarball_path)))
+    $(foreach patch_path,$6,$(call Patch_Rules,$1,$2/$1,$(if $5,$4/$5/$1,$4/$1),$(patch_path),$7))
     $(call Patch_Order_Rules,$1,$(if $5,$4/$5/$1,$4/$1))
 
 endef

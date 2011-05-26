@@ -6,6 +6,9 @@ $(eval $(call Configure_TargetFS,localhost/sr-build-tools,$(BUILD_TOP),localhost
 
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,termcap-1.3.1 pkg-config-0.23 Python-2.6.1 autoconf-2.64 libtool-2.2.4 automake-1.11,NOSTAGE UNIQBUILD NODESTDIR))
 $(eval $(call TargetFS_Install_Autoconf,localhost/sr-build-tools,nasm-2.07,BUILDINSRC NOSTAGE UNIQBUILD NODESTDIR))
+
+$(warning $(call TargetFS_Install_Make,localhost/sr-build-tools,syslinux-3.83 cdrtools-3.00,,default))
+
 $(eval $(call TargetFS_Install_Make,localhost/sr-build-tools,syslinux-3.83 cdrtools-3.00,,default))
 
 zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV)

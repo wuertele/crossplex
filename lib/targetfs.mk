@@ -303,15 +303,21 @@ define TargetFS_Template
 
   $(if $($1_$2_TARGETS),,
 
-    $1_$2_TARGETS := $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -type f; fi))
+    $1_$2_TARGETS := $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type f -o -type l -o -type d; fi))
 
-    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -type f; fi)): $($1_TARGETFS_PREFIX)/%: $2/%
+    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type f; fi)): $($1_TARGETFS_PREFIX)/%: $2/%
 	mkdir -p $$(@D)
 	rm -f $$@
 	cp -a $$< $$@
 	touch $$@
 
-    $1_TARGETFS_TARGETS += $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -type f; fi))
+    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type l; fi)): $($1_TARGETFS_PREFIX)/%:
+	$(shell if [ ! -L $$@ ]; then mkdir -p $$(@D); cp -a $2/$$* $$@; fi)
+
+    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type d -empty; fi)): $($1_TARGETFS_PREFIX)/%:
+	mkdir -p $$@
+
+    $1_TARGETFS_TARGETS += $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type f -o -type l -o -type d; fi))
 
   )
 
@@ -326,16 +332,16 @@ endef
   # $7 source plugins
   define TargetFS_Prep_Source
 
+    # TargetFS_Prep_Source (1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7)
+
     $(if $($4/$5/$3_SOURCEPREPPED),,
 
-      TargetFS_Prep_Source_$1_$2_$3 = 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7
-
-      $(call Patchify_Rules,$3,$(UNPACKED_SOURCES),$(THIRD_PARTY)/$($2_LICENSE),$4,$5,$(PATCHES)/$($2_LICENSE),$6)
+      $(call Patchify_Rules,$3,$(UNPACKED_SOURCES),$($($2_LICENSE)_SOURCES),$4,$5,$($($2_LICENSE)_SOURCES),$6)
 
       $(foreach module,$(CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS),
                 $(if $(filter $(module)%,$7),
                      $(if $(filter $(module)_LICENSE,$(.VARIABLES)),
-                          $(call Patchify_Rules,$(filter $(module)%,$7),$(UNPACKED_SOURCES),$(THIRD_PARTY)/$($(module)_LICENSE),$4,$5,$(PATCHES)/$($(module)_LICENSE),$6)
+                          $(call Patchify_Rules,$(filter $(module)%,$7),$(UNPACKED_SOURCES),$($($(module)_LICENSE)_SOURCES),$4,$5,$($($(module)_LICENSE)_SOURCES),$6)
 
       $4/$5/$3_SOURCE_PREPARED += $4/$5/$3/.src_plugin_$(module)_linked
 
@@ -640,7 +646,7 @@ endef
   # $6 = list of patch tags
   define TargetFS_Install_Make_One
 
-    $1_$2_TargetFS_Install_Make_One := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6
+    # TargetFS_Install_Make_One (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6)
 
     $(if $($2_LICENSE),,$(error must specify license for $2))
     $(if $3,,$(error must specify software version for $2))
@@ -664,7 +670,7 @@ endef
   # $5 = list of patch tags
   define TargetFS_Install_Make
 
-    $1_$2_TargetFS_Install_Make := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5
+    # TargetFS_Install_Make (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
 
     $(foreach module,$(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES),$(if $(filter $(module)%,$2),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(call TargetFS_Install_Make_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4 $($(module)_FORCE_INSTALL_TAGS),$5))))
 

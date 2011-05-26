@@ -16,6 +16,10 @@ BUILD_TOP := /home/crossplex/build
 # Defauilt places to find/put stuff
 THIRD_PARTY      := $(shell pwd)/thirdparty
 PATCHES          := $(shell pwd)/patches
+$(foreach license,GPLv2 GPL LGPL REDIST_OK,\
+  $(eval $(license)_SOURCES += $(THIRD_PARTY)/$(license))\
+  $(eval $(license)_SOURCES += $(PATCHES)/$(license)))
+GPLv2_SOURCES    := $(THIRD_PARTY)/GPL $(PATCHES)/GPL
 UNPACKED_SOURCES := $(BUILD_TOP)/unpacked-sources
 
 # Fetch third-party sources

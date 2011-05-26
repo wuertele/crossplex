@@ -53,7 +53,7 @@ ifndef Configure_Kernel
     $1_KERNEL_TOOLCHAIN  := $(call TargetFS_Search_Definer,$7,TOOLCHAIN)
     $1_KERNEL_TUPLE      := $(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE))
 
-    $(call TargetFS_Prep_Source,bogus,linux,$2,$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10)),,$(10))
+    $(call TargetFS_Prep_Source,bogus,linux,$2,$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10)),,$(10))
 
     $1_KERNEL_MAKE_OPTS := ARCH=$(call Linux_Arch,$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE)),$2)
     $1_KERNEL_MAKE_OPTS += CROSS_COMPILE=$$($1_KERNEL_TUPLE)-
@@ -64,42 +64,42 @@ ifndef Configure_Kernel
 
     $1_KERNEL_BUILD_TOOLCHAIN_DEPENDENCY := $($(firstword $(foreach token,$7,$(if $($(token)_TOOLCHAIN),$(token))))_TARGETFS_TARGETS)
 
-    $1-kernel-source-prepared: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2_SOURCE_PREPARED) 
+    $1-kernel-source-prepared: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2_SOURCE_PREPARED) 
 
     $1-kernel-source-clean:
-	rm -rf $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))
+	rm -rf $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))
 	rm -rf $3/$1
 
-    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/.config: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2_SOURCE_PREPARED) $$($1_KERNEL_BUILD_TOOLCHAIN_DEPENDENCY)
+    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/.config: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2_SOURCE_PREPARED) $$($1_KERNEL_BUILD_TOOLCHAIN_DEPENDENCY)
 	mkdir -p $$(@D)
-	cp $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2/.config-build $$@
+	cp $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2/.config-build $$@
 
-    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/.htmldocs: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2_SOURCE_PREPARED) $$($1_KERNEL_BUILD_TOOLCHAIN_DEPENDENCY)
+    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/.htmldocs: $$($(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2_SOURCE_PREPARED) $$($1_KERNEL_BUILD_TOOLCHAIN_DEPENDENCY)
 	mkdir -p $$(@D)
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) htmldocs
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) htmldocs
 
-    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinux: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/.config $5 $6
-	+ yes "" | $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS)
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-stage DEPMOD=true modules_install;
+    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinux: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/.config $5 $6
+	+ yes "" | $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS)
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$$(@D) -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-stage DEPMOD=true modules_install;
 
-    $1_KERNEL_FILENAME := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinux
+    $1_KERNEL_FILENAME := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinux
 
-    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/arch/$(call Linux_Arch,$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE)),$2)/boot/bzImage: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/.config $5 $6
-	+ yes "" | $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) bzImage
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
-	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-stage DEPMOD=true modules_install;
+    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/arch/$(call Linux_Arch,$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE)),$2)/boot/bzImage: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/.config $5 $6
+	+ yes "" | $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) oldconfig
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) bzImage
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ $$($1_KERNEL_BUILD_ENV) $(MAKE) V=1 O=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build -C $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2 $$($1_KERNEL_MAKE_OPTS) INSTALL_MOD_PATH=$(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-stage DEPMOD=true modules_install;
 
-    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinuz: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinux
+    $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinuz: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinux
 	gzip -3fc $$< > $$@
 
-    $1-kernel-compressed-image: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinuz
+    $1-kernel-compressed-image: $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinuz
 
-    $1_KERNEL_BZIMAGE_FILENAME    := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/arch/$(call Linux_Arch,$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE)),$2)/boot/bzImage
+    $1_KERNEL_BZIMAGE_FILENAME    := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/arch/$(call Linux_Arch,$(or $(call TargetFS_Search_Definition,$7,TOOLCHAIN_TARGET_TUPLE),$(HOST_TUPLE)),$2)/boot/bzImage
 
-    $1_KERNEL_COMPRESSED_FILENAME := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,$2 $8 $(10))/$2-build/vmlinuz
+    $1_KERNEL_COMPRESSED_FILENAME := $(patsubst %/,%,$(dir $3/$1))/$(call TargetFS_Decode_Work,$7)/$(call TargetFS_Build_Dir,ignorethisfield,$2 $8 $(10))/$2-build/vmlinuz
 
   endef
 
@@ -126,7 +126,7 @@ ifndef Configure_Kernel
     $1_KERNEL_PARENT_DIR := $3
     $1_KERNEL_PREFIX     := $3/$1
 
-    $(call Patchify_Rules,$2,$(UNPACKED_SOURCES),$(THIRD_PARTY)/GPL,$3,,$(PATCHES)/GPL,$(11))
+    $(call Patchify_Rules,$2,$(UNPACKED_SOURCES),$(GPLv2_SOURCES),$3,,$(GPLv2_SOURCES),$(11))
 
     $1_KERNEL_MAKE_OPTS := ARCH=$(call Linux_Arch,$4,$2)
     $1_KERNEL_MAKE_OPTS += CROSS_COMPILE=$4-

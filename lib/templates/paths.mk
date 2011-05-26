@@ -3,6 +3,5 @@
 BUILD_TOP := $(HOME)/build
 
 # always computed at runtime to be absolute, based on top level build dir
-THIRD_PARTY      := $(shell pwd)/thirdparty
-PATCHES          := $(shell pwd)/patches
+GPLv2_SOURCES    := $(shell pwd)/thirdparty/GPL $(shell pwd)/patches/GPL
 UNPACKED_SOURCES := $(BUILD_TOP)/unpacked-sources
