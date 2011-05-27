@@ -217,9 +217,12 @@ ifndef Configure_Kernel
 
     linux-source-clean: $1-linux-source-clean
 
-    $3/$2-build/.config: DEFAULT_CONFIGS=$$(sort $$(filter $3/$2/.config-default,$$($3/$2_SOURCE_PREPARED)))
-    $3/$2-build/.config: MERGE_CONFIGS=$$(sort $$(filter $3/$2/.config-merge%,$$($3/$2_SOURCE_PREPARED)))
-    $3/$2-build/.config: $$($3/$2_SOURCE_PREPARED)
+    # Make it so that Linux_Rules() can be called multiple times with the same build top and kernel version, but different kernel build names.
+    $(if $($3/$2-build/.config_RULE_DEFINED),,
+
+      $3/$2-build/.config: DEFAULT_CONFIGS=$$(sort $$(filter $3/$2/.config-default,$$($3/$2_SOURCE_PREPARED)))
+      $3/$2-build/.config: MERGE_CONFIGS=$$(sort $$(filter $3/$2/.config-merge%,$$($3/$2_SOURCE_PREPARED)))
+      $3/$2-build/.config: $$($3/$2_SOURCE_PREPARED)
 	# Default config file for $1 is $$(DEFAULT_CONFIGS)
 	# If needed, check for variable merge collisions in $$(MERGE_CONFIGS)
 	$$(if $$(MEREGE_CONFIGS),perl -e 'while (<>) { if (/([^=]+)=(.+)/) { die "duplicate $$$$1" if (defined ($$$$a{$$$$1}) || defined($$$$b{$$$$1})); $$$$a{$$$$1} = $$$$2; } elsif (/\# (\S+) is not set/) {die "duplicate $$$$1" if (defined($$$$a{$$$$1}) || defined($$$$b{$$$$1})); $$$$b{$$$$1}++;} } ' $$(MERGE_CONFIGS))
@@ -229,34 +232,13 @@ ifndef Configure_Kernel
 	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
 	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
 
-    $1-linux-config: $3/$2-build/.config
-
-    $1_CONFIG_FILENAME := $3/$2-build/.config
-
-    linux-config: $1-linux-config
-
-    $1-linux-mrproper: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
-
-    linux-mrproper: $1-linux-mrproper
-
-    $1-linux-prepare: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
-
-    linux-prepare: $1-linux-prepare
-
-    $3/$2-sanitized-headers/.installed: $1-linux-prepare unifdef
+      $3/$2-sanitized-headers/.installed: $1-linux-prepare unifdef
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
 	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D) headers_install
 	  mv $$(@D)/.installing $$@
 
-    $1-linux-sanitized-headers-install: $3/$2-sanitized-headers/.installed
-
-    linux-sanitized-headers-install: $1-linux-install-headers
-
-    $1_LINUX_SANITIZED_HEADERS := $3/$2-sanitized-headers/include
 
     $3/$2-dirty-headers/.installed: $1-linux-prepare unifdef
 	  mkdir -p $$(@D)
@@ -272,12 +254,6 @@ ifndef Configure_Kernel
 	  # ignore errors on the following two lines because they only work (and are only necessary) for linux-2.6.18
 	  -cp -r --update $3/$2/include/asm-mips/* $$(@D)/include/asm
 	  mv $$(@D)/.installing $$@
-
-    $1-linux-dirty-headers-install: $3/$2-dirty-headers/.installed
-
-    linux-dirty-headers-install: $1-linux-install-headers
-
-    $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
 
     $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
@@ -295,6 +271,38 @@ ifndef Configure_Kernel
 
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
+
+      $3/$2-build/.config_RULE_DEFINED := crossplexwashere
+
+     )
+
+    $1-linux-config: $3/$2-build/.config
+
+    $1_CONFIG_FILENAME := $3/$2-build/.config
+
+    linux-config: $1-linux-config
+
+    $1-linux-mrproper: $3/$2-build/.config
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
+
+    linux-mrproper: $1-linux-mrproper
+
+    $1-linux-prepare: $3/$2-build/.config
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
+
+    linux-prepare: $1-linux-prepare
+
+    $1-linux-sanitized-headers-install: $3/$2-sanitized-headers/.installed
+
+    linux-sanitized-headers-install: $1-linux-install-headers
+
+    $1_LINUX_SANITIZED_HEADERS := $3/$2-sanitized-headers/include
+
+    $1-linux-dirty-headers-install: $3/$2-dirty-headers/.installed
+
+    linux-dirty-headers-install: $1-linux-install-headers
+
+    $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
 
     $1-linux-compressed-image: $3/$2-build/vmlinuz
 
