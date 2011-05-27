@@ -115,6 +115,8 @@ ifndef Configure_TargetFS
   # $5 = optional toolchain target tuple
   define Configure_TargetFS
 
+    # Configure_Targetfs (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
+
     $(if $($1_Configure_TargetFS_Args),$(error Called Configure_TargetFS with non-unique name $1))
 
     $1_Configure_TargetFS_Args := 1=$1 , 2=$2 , 3=$3 , 4=$4
@@ -335,6 +337,8 @@ endef
     # TargetFS_Prep_Source (1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7)
 
     $(if $($4/$5/$3_SOURCEPREPPED),,
+
+      $(if $($($2_LICENSE)_SOURCES),,$(error $2 has license $($2_LICENSE) but source locations are undefined!))
 
       $(call Patchify_Rules,$3,$(UNPACKED_SOURCES),$($($2_LICENSE)_SOURCES),$4,$5,$($($2_LICENSE)_SOURCES),$6)
 
@@ -687,6 +691,34 @@ endef
   # $4 = list of install tags
   # $5 = list of patch tags
   define TargetFS_Install_Kernel_Headers
+
+    # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
+    $(if $2,,$(error must specify software version for linux_headers))
+
+    $(call Linux_Rules,$1-linux-headers,$2,$($1_TARGETFS_WORK),$(call TagCond,TARGET=%,%,$($1_TARGETFS_TUPLE),$3),,,,$($1_TARGETFS_BUILD_PATH),$5)
+
+    # targets defined in Linux_Rules
+    $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME): $($1_TARGETFS_WORK)/$2-sanitized-headers/.installed
+
+    $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME):
+	touch $$(@D)/.headers-installed-$($1_TARGETFS_SAFENAME)-in-progress
+	$(call Cpio_Findup,$($1_TARGETFS_WORK)/$2-sanitized-headers,$($1_TARGETFS_PREFIX))
+	mv $$(@D)/.headers-installed-$($1_TARGETFS_SAFENAME)-in-progress $$@
+
+    $1_linux_headers: $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME)
+
+    $1_TARGETFS_TARGETS += $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME)
+
+  endef
+
+  # $1 = targetfs name
+  # $2 = linux kernel version
+  # $3 = list of build tags
+  # $4 = list of install tags
+  # $5 = list of patch tags
+  define TargetFS_Install_Kernel_Headers_Orig
+
+    # TargetFS_Install_Kernel_Headers_Orig (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
 
     $1_linux_headers_TargetFS_Install_Autoconf_One := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6
 

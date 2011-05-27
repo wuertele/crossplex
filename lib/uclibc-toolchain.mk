@@ -166,6 +166,8 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
   # $7 = patch tags
   define Uclibc_Toolchain
 
+    # Uclibc_Toolchain (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6, 7=$7)
+
     $(eval $(call Configure_TargetFS,$2/uclibc-headers-sysroot,$1,$5,,$3))
     $(eval $(call Configure_TargetFS,$2/gcc-core-static-sysroot,$1,$5,,$3))
     $(eval $(call Configure_TargetFS,$2/uclibc-final-sysroot,$1,$5,,$3))

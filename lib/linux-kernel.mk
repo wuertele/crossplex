@@ -174,4 +174,141 @@ ifndef Configure_Kernel
   endef
 
 
+  # Generate rules for building a Linux Kernel
+  # $1 = kernel build name (eg. "some-random-informative-identifier")
+  # $2 = kernel version (eg. "linux-2.6.29")
+  # $3 = build top (eg. "/path/to/some/build/directory")
+  # $4 = kernel tuple (eg. "mipsel-unknown-linux-gnu")
+  # $5 = path(s) to (optional) top-level directories for initramfs packaging
+  # $6 = path(s) to (optional) top-level files containing listings for initramfs packaging
+  # $7 = dependencies to satisfy before trying to pack up $5 or $6
+  # $8 = kernel build PATH environment variable
+  # $9 = list of patch tags
+  # $(10) = kernel build toolchain dependency
+  define Linux_Rules
+
+    $(if $($1_Linux_Rules_Args),$(error Called Linux_Rules with non-unique name $1))
+    $1_Motocap_Linux_Rules_Args := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7 , 8=$8 , 9=$9 , 10=$(10)
+
+    # Linux_Rules (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6, 7=$7, 8=$8, 9=$9, 10=$(10))
+
+    $(call Patchify_Rules,$2,$(UNPACKED_SOURCES),$(GPLv2_SOURCES),$3,,$(GPLv2_SOURCES),$9)
+
+    $1_LINUX_SRC_DIR := $3/$2
+    $1_LINUX_BUILD_DIR := $3/$2-build
+
+    $1_LINUX_MAKE_OPTS := $(if $(filter i686-%,$4),ARCH=x86)
+    $1_LINUX_MAKE_OPTS += $(if $(filter mips%,$4),ARCH=mips)
+    $1_LINUX_MAKE_OPTS += $(if $4,CROSS_COMPILE=$4-)
+    $1_LINUX_MAKE_OPTS += $(if $4,CC=$4-gcc)
+    $1_LINUX_MAKE_OPTS += $(if $4,LD=$4-ld)
+    $1_LINUX_MAKE_OPTS += $(if $4,NM=$4-nm)
+    $1_LINUX_MAKE_OPTS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="$(strip $5 $6)")
+
+    # Convenience targets.  If you want to just unpack and patch a kernel, run:
+    # make mykernel-linux-source-prepared
+    # replace "mykernel" with your kernel build name as passed in as $1
+    $1-linux-source-prepared: $$($3/$2_SOURCE_PREPARED) 
+
+    linux-source-prepared: $1-linux-source-prepared
+
+    $1-linux-source-clean:
+	rm -rf $3/$2*
+
+    linux-source-clean: $1-linux-source-clean
+
+    $3/$2-build/.config: DEFAULT_CONFIGS=$$(sort $$(filter $3/$2/.config-default,$$($3/$2_SOURCE_PREPARED)))
+    $3/$2-build/.config: MERGE_CONFIGS=$$(sort $$(filter $3/$2/.config-merge%,$$($3/$2_SOURCE_PREPARED)))
+    $3/$2-build/.config: $$($3/$2_SOURCE_PREPARED)
+	# Default config file for $1 is $$(DEFAULT_CONFIGS)
+	# If needed, check for variable merge collisions in $$(MERGE_CONFIGS)
+	$$(if $$(MEREGE_CONFIGS),perl -e 'while (<>) { if (/([^=]+)=(.+)/) { die "duplicate $$$$1" if (defined ($$$$a{$$$$1}) || defined($$$$b{$$$$1})); $$$$a{$$$$1} = $$$$2; } elsif (/\# (\S+) is not set/) {die "duplicate $$$$1" if (defined($$$$a{$$$$1}) || defined($$$$b{$$$$1})); $$$$b{$$$$1}++;} } ' $$(MERGE_CONFIGS))
+	# Passed merge collision check (or didn't need it)
+	mkdir -p $$(@D)
+	perl -e 'while (<>) { if (/([^=]+)=(.+)/) { $$$$a{$$$$1} = $$$$2; delete $$$$b{$$$$1}} elsif (/\# (\S+) is not set/) {$$$$b{$$$$1}++; delete $$$$a{$$$$1}} } print join ("\n", map { "$$$$_=$$$$a{$$$$_}" } keys %a), "\n"; print join ("\n", map { "# $$$$_ is not set" } keys %b), "\n";' $$(DEFAULT_CONFIGS) $$(MERGE_CONFIGS) > $$@
+	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
+	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
+
+    $1-linux-config: $3/$2-build/.config
+
+    $1_CONFIG_FILENAME := $3/$2-build/.config
+
+    linux-config: $1-linux-config
+
+    $1-linux-mrproper: $3/$2-build/.config
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
+
+    linux-mrproper: $1-linux-mrproper
+
+    $1-linux-prepare: $3/$2-build/.config
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
+
+    linux-prepare: $1-linux-prepare
+
+    $3/$2-sanitized-headers/.installed: $1-linux-prepare unifdef
+	  mkdir -p $$(@D)
+	  touch $$(@D)/.installing
+  #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
+	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D) headers_install
+	  mv $$(@D)/.installing $$@
+
+    $1-linux-sanitized-headers-install: $3/$2-sanitized-headers/.installed
+
+    linux-sanitized-headers-install: $1-linux-install-headers
+
+    $1_LINUX_SANITIZED_HEADERS := $3/$2-sanitized-headers/include
+
+    $3/$2-dirty-headers/.installed: $1-linux-prepare unifdef
+	  mkdir -p $$(@D)
+	  touch $$(@D)/.installing
+  #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
+	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D) headers_install
+	  # ignore errors on the following two lines because they only work for linux-2.6.31
+	  -cp -r --update $3/$2/arch/mips/include/asm/* $$(@D)/include/asm
+	  cp -r --update $3/$2-build/include/linux/* $$(@D)/include/linux
+	  cp -r --update $3/$2-build/include/asm-mips/* $$(@D)/include/asm
+	  cp -r --update $3/$2-build/include/config $$(@D)/include
+	  cp -r --update $3/$2/include/linux $$(@D)/include
+	  # ignore errors on the following two lines because they only work (and are only necessary) for linux-2.6.18
+	  -cp -r --update $3/$2/include/asm-mips/* $$(@D)/include/asm
+	  mv $$(@D)/.installing $$@
+
+    $1-linux-dirty-headers-install: $3/$2-dirty-headers/.installed
+
+    linux-dirty-headers-install: $1-linux-install-headers
+
+    $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
+
+    $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+
+     $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7
+	+ yes "" | PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) bzImage
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
+	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
+	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
+	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+
+    $3/$2-build/vmlinuz: $3/$2-build/vmlinux
+	gzip -3fc $$< > $$@
+
+    $1-linux-compressed-image: $3/$2-build/vmlinuz
+
+    linux-compressed-image: $1-linux-compressed-image
+
+    $1_LINUX_BZIMAGE_FILENAME    := $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage
+
+    $1_LINUX_COMPRESSED_FILENAME := $3/$2-build/vmlinuz
+
+    $1_LINUX_HEADER_DIRS := $3/$2/include $3/$2-build/include $3/$2-build/include2
+
+    $1_LINUX_INCLUDES := $(patsubst %,-I%,$3/$2/include $3/$2-build/include $3/$2-build/include2)
+
+  endef
+
+
 endif
