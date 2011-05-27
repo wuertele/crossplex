@@ -701,6 +701,7 @@ endef
     $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME): $($1_TARGETFS_WORK)/$2-sanitized-headers/.installed
 
     $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME):
+	mkdir -p $$(@D)
 	touch $$(@D)/.headers-installed-$($1_TARGETFS_SAFENAME)-in-progress
 	$(call Cpio_Findup,$($1_TARGETFS_WORK)/$2-sanitized-headers,$($1_TARGETFS_PREFIX))
 	mv $$(@D)/.headers-installed-$($1_TARGETFS_SAFENAME)-in-progress $$@

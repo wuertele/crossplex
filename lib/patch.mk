@@ -78,23 +78,25 @@ define Patch_Rules_Core
     $(subst $(__crossplex_space),_,$1_$2_$3_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3
     $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1)
 
-    # Rule that actually enumerates and applies all patches found in the given directory, and copies the patch to an ".applied-*" state file
-    # Note that this is just the rule for applying patches individually.  See the commands for patchorder.mk for the whole series.
-    # Note^2: this checks whether the patch has already been applied, and calls make to unwind this patch and its dependents before re-applying
-    $(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)): $3/.applied-%: $1/%.patch $3/.repliduplicated
-	# Check for a preexisting .applied- file, and unroll it and its dependents if necessary
+    $(if $(wildcard $1/*.patch),
+      # Rule that actually enumerates and applies all patches found in the given directory and copies the patch to an ".applied-*" state file
+      # Note that this is just the rule for applying patches individually.  See the commands for patchorder.mk for the whole series.
+      # Note^2: this checks whether the patch has already been applied and calls make to unwind this patch and its dependents before re-applying
+      $(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)): $3/.applied-%: $1/%.patch $3/.repliduplicated
+	# Check for a preexisting .applied- file and unroll it and its dependents if necessary
 	+if [ -f $$@ ] ; then $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $$(@D)/.unapplied-$$(*F) ; fi
 	cd $$(@D) && patch -g 0 -f -p1 < $$<
 	cp -f $$< $$@
 	$(if $(GIT),cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F))
 	rm -f $$(@D)/.unapplied-$$(*F)
 
-    # This is a system of unrolling patches.  It depends on $(dir $3)/$3-patchorder.mk properly ordering the unroll.
-    # This rule is ONLY invoked when called on a single .unapplied-XYZ file, which is ONLY done in the rule defined six lines up (for $3/.applied).
-    $(patsubst $1/%.patch,$3/.unapplied-%,$(wildcard $1/*.patch)): $3/.unapplied-%: $1/%.patch
+      # This is a system of unrolling patches.  It depends on $(dir $3)/$3-patchorder.mk properly ordering the unroll.
+      # This rule is ONLY invoked when called on a single .unapplied-XYZ file which is ONLY done in the rule defined six lines up (for $3/.applied).
+      $(patsubst $1/%.patch,$3/.unapplied-%,$(wildcard $1/*.patch)): $3/.unapplied-%: $1/%.patch
 	cd $$(@D) && patch --reverse -g 0 -f -p1 < $$(@D)/.applied-$$(*F)
 	cp -f $$< $$@
 	rm -f $$(@D)/.applied-$$(*F)
+    )
 
     # As long as the user is not just doing "make clean", go ahead and add the newly defined patch targets to the list of appliable patches
     ifneq "$(MAKECMDGOALS)" "clean"
@@ -112,13 +114,13 @@ define Patch_Rules_Core
     # For every overlay_target, set a variable LATEST_OVERLAY_SOURCE_FOR_$(overlay_target).
     # The final value of this variable will be used in the dependency for $(overlay_target).
     # See below in Patch_Rules for where $3_OVERLAY_TARGETS and LATEST_OVERLAY_SOURCE_FOR_$(overlay_target) are used.
-    $$(foreach overlay_source, \
+    $(foreach overlay_source, \
                $(shell find $1/overlay -type f -o -type l 2>/dev/null), \
-               $$(if $$(LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source))), \
-                     $$(warning crossplex/patch.mk: $$(overlay_source) will override $$(LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) as existing rule for $$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) \
+               $(if $(LATEST_OVERLAY_SOURCE_FOR_$(patsubst $1/overlay/%,$3/%,$(overlay_source))), \
+                     $(warning crossplex/patch.mk: $(overlay_source) will override $(LATEST_OVERLAY_SOURCE_FOR_$(patsubst $1/overlay/%,$3/%,$(overlay_source))) as existing rule for $(patsubst $1/overlay/%,$3/%,$(overlay_source))) \
                  ) \
-               $$(eval $3_OVERLAY_TARGETS += $$(patsubst $1/overlay/%,$3/%,$$(overlay_source))) \
-               $$(eval LATEST_OVERLAY_SOURCE_FOR_$$(patsubst $1/overlay/%,$3/%,$$(overlay_source)) := $$(overlay_source)) \
+               $(eval $3_OVERLAY_TARGETS += $(patsubst $1/overlay/%,$3/%,$(overlay_source))) \
+               $(eval LATEST_OVERLAY_SOURCE_FOR_$(patsubst $1/overlay/%,$3/%,$(overlay_source)) := $(overlay_source)) \
       )
 
 endef
@@ -173,7 +175,7 @@ define Patch_Rules
     # There is a chance that another package with the exact same same patch tags coming from different
     # patch hierarchies could collide here.  In that case you will see an error
     # like "multiple rules for ..."
-    $$(foreach overlay_target,$$(sort $$($3_OVERLAY_TARGETS)),$$(call Overlay_Target,$$(overlay_target),$$(LATEST_OVERLAY_SOURCE_FOR_$$(overlay_target)),$3/.repliduplicated))
+    $(foreach overlay_target,$(sort $($3_OVERLAY_TARGETS)),$(call Overlay_Target,$(overlay_target),$(LATEST_OVERLAY_SOURCE_FOR_$(overlay_target)),$3/.repliduplicated))
 
     # Don't remove the ".applied-*" state files even though they may be intermediates
     .PRECIOUS: $3/.applied-%

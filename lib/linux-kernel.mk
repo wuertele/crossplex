@@ -173,7 +173,6 @@ ifndef Configure_Kernel
 
   endef
 
-
   # Generate rules for building a Linux Kernel
   # $1 = kernel build name (eg. "some-random-informative-identifier")
   # $2 = kernel version (eg. "linux-2.6.29")
@@ -199,11 +198,11 @@ ifndef Configure_Kernel
 
     $1_LINUX_MAKE_OPTS := $(if $(filter i686-%,$4),ARCH=x86)
     $1_LINUX_MAKE_OPTS += $(if $(filter mips%,$4),ARCH=mips)
-    $1_LINUX_MAKE_OPTS += $(if $4,CROSS_COMPILE=$4-)
-    $1_LINUX_MAKE_OPTS += $(if $4,CC=$4-gcc)
-    $1_LINUX_MAKE_OPTS += $(if $4,LD=$4-ld)
-    $1_LINUX_MAKE_OPTS += $(if $4,NM=$4-nm)
     $1_LINUX_MAKE_OPTS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="$(strip $5 $6)")
+
+ifneq ($4,$(HOST_TUPLE))
+    $1_LINUX_MAKE_OPTS += $(if $4,CROSS_COMPILE=$4-)
+endif
 
     # Convenience targets.  If you want to just unpack and patch a kernel, run:
     # make mykernel-linux-source-prepared
@@ -232,7 +231,7 @@ ifndef Configure_Kernel
 	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
 	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
 
-      $3/$2-sanitized-headers/.installed: $1-linux-prepare unifdef
+      $3/$2-sanitized-headers/.installed: $3/$2-build/scripts/kallsyms
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
@@ -240,7 +239,7 @@ ifndef Configure_Kernel
 	  mv $$(@D)/.installing $$@
 
 
-    $3/$2-dirty-headers/.installed: $1-linux-prepare unifdef
+    $3/$2-dirty-headers/.installed: $3/$2-build/scripts/kallsyms
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
@@ -272,6 +271,9 @@ ifndef Configure_Kernel
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
 
+    $3/$2-build/scripts/kallsyms: $3/$2-build/.config
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$(filter-out CROSS_COMPILE=%,$$($1_LINUX_MAKE_OPTS)) prepare scripts
+
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
 
      )
@@ -280,33 +282,32 @@ ifndef Configure_Kernel
 
     $1_CONFIG_FILENAME := $3/$2-build/.config
 
-    linux-config: $1-linux-config
+    linux-config: $3/$2-build/.config
 
     $1-linux-mrproper: $3/$2-build/.config
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
 
     linux-mrproper: $1-linux-mrproper
 
-    $1-linux-prepare: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
+    $1-linux-prepare: $3/$2-build/scripts/kallsyms
 
-    linux-prepare: $1-linux-prepare
+    linux-prepare: $3/$2-build/scripts/kallsyms
 
     $1-linux-sanitized-headers-install: $3/$2-sanitized-headers/.installed
 
-    linux-sanitized-headers-install: $1-linux-install-headers
+    linux-sanitized-headers-install: $3/$2-sanitized-headers/.installed
 
     $1_LINUX_SANITIZED_HEADERS := $3/$2-sanitized-headers/include
 
     $1-linux-dirty-headers-install: $3/$2-dirty-headers/.installed
 
-    linux-dirty-headers-install: $1-linux-install-headers
+    linux-dirty-headers-install: $3/$2-dirty-headers/.installed
 
     $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
 
     $1-linux-compressed-image: $3/$2-build/vmlinuz
 
-    linux-compressed-image: $1-linux-compressed-image
+    linux-compressed-image: $3/$2-build/vmlinuz
 
     $1_LINUX_BZIMAGE_FILENAME    := $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage
 
