@@ -188,7 +188,7 @@ ifndef Configure_Kernel
   define Linux_Rules
 
     $(if $($1_Linux_Rules_Args),$(error Called Linux_Rules with non-unique name $1))
-    $1_Motocap_Linux_Rules_Args := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7 , 8=$8 , 9=$9 , 10=$(10)
+    $1_Linux_Rules_Args := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7 , 8=$8 , 9=$9 , 10=$(10)
 
     # Linux_Rules (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6, 7=$7, 8=$8, 9=$9, 10=$(10))
 
