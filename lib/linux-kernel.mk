@@ -235,7 +235,7 @@ endif
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
-	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D) headers_install
+	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr headers_install
 	  mv $$(@D)/.installing $$@
 
 
@@ -243,7 +243,7 @@ endif
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
-	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D) headers_install
+	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr headers_install
 	  # ignore errors on the following two lines because they only work for linux-2.6.31
 	  -cp -r --update $3/$2/arch/mips/include/asm/* $$(@D)/include/asm
 	  cp -r --update $3/$2-build/include/linux/* $$(@D)/include/linux
