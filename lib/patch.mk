@@ -168,8 +168,13 @@ define Patch_Rules
 
     sourceclean: $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean)
 
-    $(foreach patch_path,$4,$(call Patch_Rules_Core,$(patch_path)/$1,$2,$3)\
-             $(foreach subdir,$5,$(call Patch_Rules_Core,$(patch_path)/$1/$(subdir),$2,$3)))
+    # All patches directly under version (not in subdirs of version) get applied in order of patch path
+    $(foreach patch_path,$4,$(call Patch_Rules_Core,$(patch_path)/$1,$2,$3))
+
+    # All patches in subdirs of version get applied in order of callout in $5
+    $(foreach subdir,$5,\
+       $(foreach patch_path,$4,\
+          $(call Patch_Rules_Core,$(patch_path)/$1/$(subdir),$2,$3)))
 
     # For each overlay_target defined in the above calls to Patch_Rules_Core, create a rule.
     # There is a chance that another package with the exact same same patch tags coming from different
