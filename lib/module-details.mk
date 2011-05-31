@@ -116,6 +116,7 @@ ifndef MODULE_DETAILS_LOADED
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpfr),--with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr))
 
   gcc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
+  gcc_BUILD_ENVIRONMENT += $$(if $$(call $1_TargetFS_Tool_DESTDIR,gmp),CFLAGS="-I$$(call $1_TargetFS_Tool_DESTDIR,gmp)")
 
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 := configure-gcc 
   CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += configure-libcpp

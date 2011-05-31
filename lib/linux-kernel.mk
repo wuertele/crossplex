@@ -231,7 +231,7 @@ endif
 	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
 	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
 
-      $3/$2-sanitized-headers/.installed: $3/$2-build/scripts/kallsyms
+      $3/$2-sanitized-headers/.installed: $3/$2-build/.config
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
@@ -239,7 +239,7 @@ endif
 	  mv $$(@D)/.installing $$@
 
 
-    $3/$2-dirty-headers/.installed: $3/$2-build/scripts/kallsyms
+    $3/$2-dirty-headers/.installed: $3/$2-build/.config
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
