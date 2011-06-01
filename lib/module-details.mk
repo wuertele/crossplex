@@ -251,16 +251,19 @@ ifndef MODULE_DETAILS_LOADED
   uClibc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
 
   uClibc_MAKE_ARGS_step1 += V=1
+  uClibc_MAKE_ARGS_step1 += HOSTCC=gcc
   uClibc_MAKE_ARGS_step1 += $(call TagSubst,MAKEARGS=headers,oldconfig,$2)
   uClibc_MAKE_ARGS_step1 += $(call TagSubst,MAKEARGS=final,CROSS=$($1_TARGETFS_TUPLE)-,$2)
   uClibc_MAKE_ARGS_step1 += $(if $(filter SYSROOT=%,$2),KERNEL_HEADERS=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$2))/usr/include)
 
   uClibc_MAKE_ARGS_step2 += V=1
-  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=headers,headers,$2)
-  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=final,utils hostutils CROSS=$($1_TARGETFS_TUPLE)-,$2)
+  uClibc_MAKE_ARGS_step2 += HOSTCC=gcc CC=$($1_TARGETFS_TUPLE)-gcc
+  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=headers,pregen,$2)
+  uClibc_MAKE_ARGS_step2 += $(call TagSubst,MAKEARGS=final,utils CROSS=$($1_TARGETFS_TUPLE)-,$2)
   uClibc_MAKE_ARGS_step2 += $(if $(filter SYSROOT=%,$2),KERNEL_HEADERS=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$2))/usr/include)
 
   uClibc_MAKE_INSTALL_ARGS += V=1
+  uClibc_MAKE_INSTALL_ARGS += HOSTCC=gcc
   uClibc_MAKE_INSTALL_ARGS += PREFIX=$3
   uClibc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=headers,install_headers,$2)
   uClibc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=final,install install_utils CROSS=$($1_TARGETFS_TUPLE)-,$2)
