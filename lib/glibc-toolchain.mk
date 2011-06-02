@@ -111,6 +111,8 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
   # $4 = additional sublib order-only dependencies
   define Glibc_Sub_Lib_Depends
 
+    $1_libc_TARGETS += $($1_TARGETFS_PREFIX)/$3
+
     $1_TARGETFS_INSTALLABLE_COMPONENT += $2
 
     $1_TARGETFS_INSTALLABLE_FILE += $3

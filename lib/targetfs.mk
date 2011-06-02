@@ -185,6 +185,13 @@ ifndef Configure_TargetFS
 
      )
 
+    # Various aliases for subsets of components whose install rules are already defined
+    $(foreach component,$(sort $(foreach targetfs,$3,$($(targetfs)_TARGETFS_ALIASED_COMPONENT))),
+
+      $1_$(component)_TARGETS := $(patsubst %,$2/$1/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE))
+
+     )
+
     $1-clean:
 	rm -rf $$($1_TARGETFS_PREFIX)
 	rm -rf $$($1_TARGETFS_PKGCONFIG)
@@ -314,7 +321,7 @@ define TargetFS_Template
 	touch $$@
 
     $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type l; fi)): $($1_TARGETFS_PREFIX)/%:
-	$(shell if [ ! -L $$@ ]; then mkdir -p $$(@D); cp -a $2/$$* $$@; fi)
+	$$(shell if [ ! -L $$@ ]; then mkdir -p $$(@D); cp -a $2/$$* $$@; fi)
 
     $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type d -empty; fi)): $($1_TARGETFS_PREFIX)/%:
 	mkdir -p $$@

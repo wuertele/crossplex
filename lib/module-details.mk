@@ -2098,6 +2098,7 @@ ifndef MODULE_DETAILS_LOADED
   busybox_RUNTIME_DEPENDENCIES += dev/null
   busybox_RUNTIME_DEPENDENCIES += dev/tty
   busybox_RUNTIME_DEPENDENCIES += dev/urandom
+  busybox_RUNTIME_DEPENDENCIES += dev/ttyS0
   busybox_RUNTIME_DEPENDENCIES += proc
   busybox_RUNTIME_DEPENDENCIES += etc/localtime
   busybox_RUNTIME_DEPENDENCIES += ld
