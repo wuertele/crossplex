@@ -25,6 +25,8 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
 ### Building Toolchains with TargetFS
 
+  LIBVER_uClibc-0.9.29_libstdc++ := 6.0.13
+
   UCLIBC_PROGRAMS += sbin/ldconfig                # Configures the dynamic linker runtime bindings
   UCLIBC_PROGRAMS += usr/bin/ldd                  # Reports which shared libraries are required by each given program or shared library
   UCLIBC_PROGRAMS += usr/bin/iconv                # Performs character set conversion
@@ -119,6 +121,8 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
     $1_$2_INSTALLABLE_FILE += $3
 
+    $1_libc_INSTALLABLE_FILE += $3
+
     $1_$2_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
     $($1_TARGETFS_PREFIX)/$3: $($1_uClibc_TARGETS) | $4
@@ -138,6 +142,8 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
     $1_TARGETFS_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
     $1_$2_INSTALLABLE_DEV_FILE += $3
+
+    $1_libc_INSTALLABLE_DEV_FILE += $3
 
     $1_$2_DEV_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
@@ -213,12 +219,14 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
     $(foreach library_name,$(UCLIBC_LIBRARIES_ulaso000),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),usr/lib/$(library_name).so.0.0.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_S100),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1.0.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_S300),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.3.0.0))
-    $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.6.0.10))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.$(LIBVER_uClibc-0.9.29_libstdc++)))
     $(foreach library_name,$(UCLIBC_LIBRARIES_bfd),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-2.19.1.so))
 
     $(foreach library_name,$(UCLIBC_LIBRARIES_VS0ulaSp) $(UCLIBC_LIBRARIES_VS1ulaSp) $(UCLIBC_LIBRARIES_S100) $(UCLIBC_LIBRARIES_S300) $(UCLIBC_LIBRARIES_bfd) $(UCLIBC_LIBRARIES_ulala) $(UCLIBC_LIBRARIES_ulaso) $(UCLIBC_LIBRARIES_ulaso000) $(UCLIBC_LIBRARIES_0UAS) ,$(call Uclibc_Sub_Lib_Depends_Devel,$2/toolchain,$(library_name),usr/lib/$(library_name).a))
 
     $(foreach library_name,$(UCLIBC_LIBRARIES_S000ala) $(UCLIBC_LIBRARIES_S000alasns) $(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends_Devel,$2/toolchain,$(library_name),$3/lib/$(library_name).a))
+
+    $2/toolchain_TARGETFS_ALIASED_COMPONENT += libc
 
     # TODO:  add inter-library dependencies for the above component libraries
 
