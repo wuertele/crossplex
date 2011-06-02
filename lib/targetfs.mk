@@ -717,6 +717,23 @@ endef
   # $3 = list of build tags
   # $4 = list of install tags
   # $5 = list of patch tags
+  define TargetFS_Initramfs_Kernel
+
+    # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
+    $(if $2,,$(error must specify software version for linux_headers))
+
+    $(sort $(dir $(call Complete_Targetfs_Target_List,$1))): $(call Complete_Targetfs_Target_List,$1)
+
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5)
+
+  endef
+
+
+  # $1 = targetfs name
+  # $2 = linux kernel version
+  # $3 = list of build tags
+  # $4 = list of install tags
+  # $5 = list of patch tags
   define TargetFS_Install_Kernel_Headers_Orig
 
     # TargetFS_Install_Kernel_Headers_Orig (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
