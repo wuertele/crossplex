@@ -257,7 +257,11 @@ endif
     $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
+	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
+	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
+	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/2-stage DEPMOD=true modules_install;
 
      $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7
 	+ yes "" | PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
@@ -266,7 +270,8 @@ endif
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
 	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
 	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/2-stage DEPMOD=true modules_install;
 
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
