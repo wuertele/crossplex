@@ -77,9 +77,9 @@ define Patch_Rules_Core
 
     # Skip generating rules if there are any empty dirs, or if we have already seen this set of cannonicalized dirs before
     $(and $1,$2,$3,
-    $(if $($(subst $(__crossplex_space),_,$(shell readlink -f $1)_$(shell readlink -f $2)_$(shell readlink -f $3)_UNIQUE_PATCH_RULES_CORE_ARGS)),,
+    $(if $($(subst $(__crossplex_space),_,$(or $(shell readlink -f $1),$1)_$(or $(shell readlink -f $2),$2)_$(or $(shell readlink -f $3),$3)_UNIQUE_PATCH_RULES_CORE_ARGS)),,
 
-    $(eval $(subst $(__crossplex_space),_,$(shell readlink -f $1)_$(shell readlink -f $2)_$(shell readlink -f $3)_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3)
+    $(eval $(subst $(__crossplex_space),_,$(or $(shell readlink -f $1),$1)_$(or $(shell readlink -f $2),$2)_$(or $(shell readlink -f $3),$3)_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3)
     $(eval $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1))
 
     $(if $(wildcard $1/*.patch),
@@ -105,6 +105,7 @@ define Patch_Rules_Core
     # As long as the user is not just doing "make clean", go ahead and add the newly defined patch targets to the list of appliable patches
     ifneq "$(MAKECMDGOALS)" "clean"
       ifneq "$(MAKECMDGOALS)" "ultraclean"
+$(warning $3_PATCHES += $(if $(strip $(wildcard $1/*.patch)),$(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch))))
         $3_PATCHES += $(if $(strip $(wildcard $1/*.patch)),$(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)))
       endif
     endif
