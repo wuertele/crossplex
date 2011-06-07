@@ -277,7 +277,7 @@ endif
 	gzip -3fc $$< > $$@
 
     $3/$2-build/scripts/kallsyms: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$(filter-out CROSS_COMPILE=%,$$($1_LINUX_MAKE_OPTS)) prepare scripts
+	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
 
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
 
@@ -295,6 +295,8 @@ endif
     linux-mrproper: $1-linux-mrproper
 
     $1-linux-prepare: $3/$2-build/scripts/kallsyms
+
+    $1_LINUX_KALLSYMS = $3/$2-build/scripts/kallsyms
 
     linux-prepare: $3/$2-build/scripts/kallsyms
 

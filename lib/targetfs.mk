@@ -731,7 +731,9 @@ endef
 
     $(sort $(dir $(call Complete_Targetfs_Target_List,$1))): $(call Complete_Targetfs_Target_List,$1)
 
-    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5)
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5)
+
+    $1_initramfs-linux-prepare_DEV_TARGETS += $1-linux-linux-prepare
 
   endef
 

@@ -75,8 +75,12 @@ define Patch_Rules_Core
 
     # Patch_Rules_Core (1=$1, 2=$2, 3=$3)
 
-    $(subst $(__crossplex_space),_,$1_$2_$3_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3
-    $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1)
+    # Skip generating rules if there are any empty dirs, or if we have already seen this set of cannonicalized dirs before
+    $(and $1,$2,$3,
+    $(if $($(subst $(__crossplex_space),_,$(shell readlink -f $1)_$(shell readlink -f $2)_$(shell readlink -f $3)_UNIQUE_PATCH_RULES_CORE_ARGS)),,
+
+    $(eval $(subst $(__crossplex_space),_,$(shell readlink -f $1)_$(shell readlink -f $2)_$(shell readlink -f $3)_UNIQUE_PATCH_RULES_CORE_ARGS) := $1 , $2 , $3)
+    $(eval $(subst $(__crossplex_space),_,$3_PATCH_DIRS_SEARCHED) := $$(sort $$($3_PATCH_DIRS_SEARCHED) $1))
 
     $(if $(wildcard $1/*.patch),
       # Rule that actually enumerates and applies all patches found in the given directory and copies the patch to an ".applied-*" state file
@@ -123,7 +127,10 @@ define Patch_Rules_Core
                $(eval LATEST_OVERLAY_SOURCE_FOR_$(patsubst $1/overlay/%,$3/%,$(overlay_source)) := $(overlay_source)) \
       )
 
+    ))
+
 endef
+
 
 
 # $1 = target
@@ -268,7 +275,6 @@ define Patchify_Rules
       $(eval $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_$6_$7_Unique_Patchify_Args) := crossplexwashere)
 
       # Patchify_Rules(1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6, 7=$7)
-
       $(foreach tarball_path,$3,$(call Unpack_Rules,$1,$2,$(tarball_path)))
       $(call Patch_Rules,$1,$2/$1,$(if $5,$4/$5/$1,$4/$1),$6,$7)
       $(call Patch_Rules,$1,$2/$1,$(if $5,$4/$5/$1,$4/$1)-compare,$6,$7)
