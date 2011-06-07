@@ -105,7 +105,6 @@ define Patch_Rules_Core
     # As long as the user is not just doing "make clean", go ahead and add the newly defined patch targets to the list of appliable patches
     ifneq "$(MAKECMDGOALS)" "clean"
       ifneq "$(MAKECMDGOALS)" "ultraclean"
-$(warning $3_PATCHES += $(if $(strip $(wildcard $1/*.patch)),$(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch))))
         $3_PATCHES += $(if $(strip $(wildcard $1/*.patch)),$(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)))
       endif
     endif
