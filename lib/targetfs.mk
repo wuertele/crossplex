@@ -650,6 +650,21 @@ endef
   endef
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
+  # $2 = list of software versions to install
+  # $3 = list of build tags
+  # $4 = list of install tags
+  # $5 = list of patch tags
+  define TargetFS_Install
+
+    $1_$2_TargetFS_Install := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5
+
+    $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)%,$2),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(call TargetFS_Install_Autoconf_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4,$5))))
+
+    $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES)),$(if $(strip $(foreach acmodule,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(and $(filter $(acmodule)%,$2),$(filter $(acmodule)_LICENSE,$(.VARIABLES))))),,$(if $(and $(filter $(module)%,$2),$(filter $(module)_LICENSE,$(.VARIABLES))),$(call TargetFS_Install_Make_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4 $($(module)_FORCE_INSTALL_TAGS),$5))))
+
+  endef
+
+  # $1 = targetfs name (eg "daves_favorite_targetfs")
   # $2 = software module name (eg "syslinux")
   # $3 = software version
   # $4 = list of build tags
@@ -731,9 +746,18 @@ endef
 
     $(sort $(dir $(call Complete_Targetfs_Target_List,$1))): $(call Complete_Targetfs_Target_List,$1)
 
-    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5)
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
-    $1_initramfs-linux-prepare_DEV_TARGETS += $1-linux-linux-prepare
+    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+
+  endef
+
+
+  # $1 = targetfs name
+  # $2 = linux kernel version
+  define TargetFS_Initramfs_Kernel_DEVTARGETS
+
+    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
 
   endef
 
