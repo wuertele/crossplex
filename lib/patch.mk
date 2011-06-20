@@ -57,6 +57,7 @@ define Unpack_Rules
 
   # Unpack_Rules (1=$1, 2=$2, 3=$3)
 
+  $(call General_Unpack_Rule,$1,$2,$3,.tar.xz,tar xvJf,tar tJf)
   $(call General_Unpack_Rule,$1,$2,$3,.tar.gz,tar xvzf,tar tzf)
   $(call General_Unpack_Rule,$1,$2,$3,.tgz,tar xvzf,tar tzf)
   $(call General_Unpack_Rule,$1,$2,$3,.tar.bz2,tar xvjf,tar tjf)

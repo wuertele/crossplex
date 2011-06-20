@@ -254,7 +254,7 @@ endif
 	  -cp -r --update $3/$2/include/asm-mips/* $$(@D)/include/asm
 	  mv $$(@D)/.installing $$@
 
-    $3/$2-build/vmlinux: $3/$2-build/.config $6 $7
+    $3/$2-build/vmlinux: $3/$2-build/.config $6 $7 $(10)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
@@ -263,7 +263,7 @@ endif
 	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
 
-     $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7
+     $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7 $(10)
 	+ yes "" | PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) bzImage
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
@@ -276,7 +276,7 @@ endif
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
 
-    $3/$2-build/scripts/kallsyms: $3/$2-build/.config
+    $3/$2-build/scripts/kallsyms: $3/$2-build/.config $(10)
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
 
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
@@ -293,6 +293,8 @@ endif
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
 
     linux-mrproper: $1-linux-mrproper
+
+    $1-linux-prepare_TARGETS += $3/$2-build/scripts/kallsyms
 
     $1-linux-prepare: $3/$2-build/scripts/kallsyms
 
@@ -311,6 +313,8 @@ endif
     linux-dirty-headers-install: $3/$2-dirty-headers/.installed
 
     $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
+
+    $1-linux-compressed-image_PATH := $3/$2-build/vmlinuz
 
     $1-linux-compressed-image: $3/$2-build/vmlinuz
 
