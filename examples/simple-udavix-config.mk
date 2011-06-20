@@ -9,7 +9,7 @@ $(eval $(call TargetFS_Install_Autoconf,localhost/ubuild-tools,termcap-1.3.1))
 #$(eval $(call TargetFS_Install_Autoconf,localhost/ubuild-tools,mpfr-2.4.2,NOSTAGE UNIQBUILD NODESTDIR))
 $(eval $(call TargetFS_Install_Make,localhost/ubuild-tools,syslinux-3.83 cdrtools-3.00,,default))
 
-UDAVIX_TOOLCHAIN_VERSIONS  := binutils-2.19.1 gcc-4.3.2 gmp-4.3.1 mpfr-2.4.2 uClibc-0.9.30.1 linux-2.6.31.12 gdb-6.8
+UDAVIX_TOOLCHAIN_VERSIONS  := binutils-2.19.1 gcc-4.3.2 gmp-4.3.1 mpfr-2.4.2 uClibc-0.9.32 linux-2.6.31.12 gdb-6.8
 # dmalloc-5.5.2
 # duma_2_5_15
 # ncurses-5.7
