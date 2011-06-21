@@ -2083,7 +2083,7 @@ ifndef MODULE_DETAILS_LOADED
   Busybox_Arch = $(sort $(foreach arch,$(patsubst BUSYBOX_ARCHMAP_%,%,$(filter BUSYBOX_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(BUSYBOX_ARCHMAP_$(arch)),$1),$(arch))))
 
   busybox_MAKE_ARGS  = CROSS_COMPILE=$($1_TARGETFS_TUPLE)-
-  busybox_MAKE_ARGS += ARCH=$(call Fontconfig_Arch,$($1_TARGETFS_TUPLE))
+  busybox_MAKE_ARGS += ARCH=$(call Busybox_Arch,$($1_TARGETFS_TUPLE))
   busybox_MAKE_ARGS += V=1
 
   busybox_MAKE_INSTALL_ARGS  = CROSS_COMPILE=$($1_TARGETFS_TUPLE)-
