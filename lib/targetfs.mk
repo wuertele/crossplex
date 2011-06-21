@@ -649,6 +649,10 @@ endef
 
   endef
 
+  TargetFS_Autoconf_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
+
+  TargetFS_Make_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
+
   # $1 = targetfs name (eg "daves_favorite_targetfs")
   # $2 = list of software versions to install
   # $3 = list of build tags
@@ -658,9 +662,11 @@ endef
 
     $1_$2_TargetFS_Install := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5
 
-    $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)%,$2),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(call TargetFS_Install_Autoconf_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4,$5))))
-
-    $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES)),$(if $(strip $(foreach acmodule,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(and $(filter $(acmodule)%,$2),$(filter $(acmodule)_LICENSE,$(.VARIABLES))))),,$(if $(and $(filter $(module)%,$2),$(filter $(module)_LICENSE,$(.VARIABLES))),$(call TargetFS_Install_Make_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4 $($(module)_FORCE_INSTALL_TAGS),$5))))
+    $(foreach module_ver,$2,\
+       $(if $(call TargetFS_Autoconf_Module,$(module_ver)),\
+            $(call TargetFS_Install_Autoconf_One,$1,$(call TargetFS_Autoconf_Module,$(module_ver)),$(module_ver),$3 $($(call TargetFS_Autoconf_Module,$(module_ver))_FORCE_BUILD_TAGS),$4 $($(call TargetFS_Autoconf_Module,$(module_ver))_FORCE_INSTALL_TAGS),$5),\
+            $(if $(call TargetFS_Make_Module,$(module_ver)),\
+              $(call TargetFS_Install_Make_One,$1,$(call TargetFS_Make_Module,$(module_ver)),$(module_ver),$3 $($(call TargetFS_Make_Module,$(module_ver))_FORCE_BUILD_TAGS),$4 $($(call TargetFS_Make_Module,$(module_ver))_FORCE_INSTALL_TAGS),$5))))
 
   endef
 
@@ -673,6 +679,8 @@ endef
   define TargetFS_Install_Make_One
 
     # TargetFS_Install_Make_One (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6)
+
+    $1_$2_TargetFS_Install_Make_One += (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6)
 
     $(if $($2_LICENSE),,$(error must specify license for $2))
     $(if $3,,$(error must specify software version for $2))
