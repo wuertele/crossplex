@@ -693,6 +693,8 @@ endef
 
     $(if $(filter NOSTAGE,$4),$(call TargetFS_NoStage,$1,$2,$3,$4 NOCONFIGURE BUILDINSRC,$5,$6),$(call TargetFS_Stage,$1,$2,$3,$4 NOCONFIGURE BUILDINSRC,$5,$6))
 
+    $$($1_$2_TARGETS): $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
+
     $1_$2: $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
 
     $1_MAKE_MODULES += $2
