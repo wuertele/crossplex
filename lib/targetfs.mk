@@ -433,6 +433,8 @@ endef
 
       $3$4_BUILD_TARGET := $3$4/.built
 
+      $1_$2_BUILD_DIR := $3$4
+
     )
 
   endef
