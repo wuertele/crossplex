@@ -57,7 +57,7 @@ endif
   # $1 = source directory
   # $2 = source file
   # $3 = target directory
-  Cpio_DupOne_WithLinks = function duptargets { if [ -L $$1/$$2 ]; then t=`readlink $$1/$$2`; td=`dirname $$t`; duptargets $$1/$$td $$t $$3/$$td; fi; mkdir -p $$3; if [ ! -z $(STAT) ] && [ -x $(STAT) ] && [ -e $1 ] && [ -e $3 ] && [ x`$(STAT) --format=%D $$1` = x`$(STAT) --format=%D $$3` ]; then echo hardlinking $$1/$$2 to $$3 && pushd $$1 && ( ( echo $$2 | cpio -aplmdu $$3 ) || ( echo $$2 | cpio -apmdu $$3 ) ) && popd; else echo copying $$1/$$2 to $$3 && pushd $$1 && echo $$2 | cpio -apmdu $$3 && popd ; fi }; mkdir -p $1; pushd $1; asd=`pwd`; popd; mkdir -p $3; pushd $3; atd=`pwd`; popd; duptargets $$asd $2 $$atd
+  Cpio_DupOne_WithLinks = function duptargets { if [ ! -e $$1/$$2 -a ! -L $$1/$$2 ]; then echo $$1/$$2 does not exist; exit -3; fi; if [ -L $$1/$$2 ]; then t=`readlink $$1/$$2`; td=`dirname $$t`; tb=`basename $$t`; duptargets $$1/$$td $$tb $$3/$$td; fi; mkdir -p $$3; if [ ! -z $(STAT) ] && [ -x $(STAT) ] && [ -e $$1 ] && [ -e $$3 ] && [ x`$(STAT) --format=%D $$1` = x`$(STAT) --format=%D $$3` ]; then echo hardlinking $$1/$$2 to $$3 && pushd $$1 && ( ( echo $$2 | cpio -aplmdu $$3 ) || ( echo $$2 | cpio -apmdu $$3 ) ) && popd; else echo copying $$1/$$2 to $$3 && pushd $$1 && echo $$2 | cpio -apmdu $$3 && popd ; fi }; mkdir -p $1; pushd $1; asd=`pwd`; popd; mkdir -p $3; pushd $3; atd=`pwd`; popd; duptargets $$asd $2 $$atd
 
   # cd to directory $1 and LINK every file found under that directory to an equivalent path rooted at direcory $2
   Cpio_Findlink = if [ -d $1 ]; then cd $1 && find . | $(Cpio_Link) $2; fi

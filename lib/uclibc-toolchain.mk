@@ -123,7 +123,7 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
     $1_$2_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
-    $($1_TARGETFS_PREFIX)/$3: $($1_uClibc_TARGETS) | $4
+    $($1_TARGETFS_PREFIX)/$3: $($1_uClibc_TARGETS) $($1_gcc_TARGETS) $($1_gdb_TARGETS) | $4
 
   endef
 
@@ -145,7 +145,7 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
     $1_$2_DEV_TARGETS += $($1_TARGETFS_PREFIX)/$3
 
-    $($1_TARGETFS_PREFIX)/$3: $($1_uClibc_TARGETS) | $4
+    $($1_TARGETFS_PREFIX)/$3: $($1_uClibc_TARGETS) $($1_gcc_TARGETS) $($1_gdb_TARGETS) | $4
 
   endef
 
