@@ -323,7 +323,7 @@ define TargetFS_Template
     $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type l; fi)): $($1_TARGETFS_PREFIX)/%:
 	$$(shell if [ ! -L $$@ ]; then mkdir -p $$(@D); cp -a $2/$$* $$@; fi)
 
-    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type d -empty; fi)): $($1_TARGETFS_PREFIX)/%:
+    $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type d; fi)): $($1_TARGETFS_PREFIX)/%:
 	mkdir -p $$@
 
     $1_TARGETFS_TARGETS += $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type f -o -type l -o -type d; fi))
@@ -751,7 +751,7 @@ endef
   # $3 = list of build tags
   # $4 = list of install tags
   # $5 = list of patch tags
-  define TargetFS_Initramfs_Kernel
+  define TargetFS_initramfs_Kernel
 
     # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
     $(if $2,,$(error must specify software version for linux_headers))
@@ -767,9 +767,34 @@ endef
 
   # $1 = targetfs name
   # $2 = linux kernel version
-  define TargetFS_Initramfs_Kernel_DEVTARGETS
+  define TargetFS_initramfs_Kernel_DEVTARGETS
 
     $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+
+  endef
+
+
+  # $1 = targetfs name
+  # $2 = linux kernel version
+  # $3 = list of build tags
+  # $4 = list of install tags
+  # $5 = list of patch tags
+  define TargetFS_nfsroot_Kernel
+
+    # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
+    $(if $2,,$(error must specify software version for linux_headers))
+
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),,,,$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
+
+    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+
+  endef
+
+  # $1 = targetfs name
+  # $2 = linux kernel version
+  define TargetFS_nfsroot_Kernel_DEVTARGETS
+
+    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
 
   endef
 

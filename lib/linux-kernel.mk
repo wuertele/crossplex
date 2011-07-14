@@ -278,6 +278,7 @@ endif
 
     $3/$2-build/scripts/kallsyms: $3/$2-build/.config $(10)
 	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
+	touch $$@
 
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
 
