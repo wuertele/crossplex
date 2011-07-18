@@ -402,7 +402,7 @@ endef
       $1_$2-build-dependencies $3$4/.built: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
       $1_$2-build-dependencies $3$4/.building: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
 
-      $1_$2-build-dependencies $3$4/.built: $(patsubst %,$$($1_%_DEV_TARGETS),$($2_BUILD_DEPENDENCIES))	# these are the **_DEV_TARGETS (staged files) for each package that must be built before this one
+      $1_$2-build-dependencies $3$4/.built: $(sort $(patsubst %,$$($1_%_DEV_TARGETS),$($2_BUILD_DEPENDENCIES)))	# these are the **_DEV_TARGETS (staged files) for each package that must be built before this one
       #this next line is a better version of the previous line.  maybe delete the previous line...
       $1_$2-build-dependencies $3$4/.built: $(foreach dependency,$($2_BUILD_DEPENDENCIES),$(call $1_TargetFS_Tool_SENTINEL,$(dependency))) 
 
