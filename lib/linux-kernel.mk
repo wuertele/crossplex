@@ -229,21 +229,21 @@ endif
 	mkdir -p $$(@D)
 	perl -e 'while (<>) { if (/([^=]+)=(.+)/) { $$$$a{$$$$1} = $$$$2; delete $$$$b{$$$$1}} elsif (/\# (\S+) is not set/) {$$$$b{$$$$1}++; delete $$$$a{$$$$1}} } print join ("\n", map { "$$$$_=$$$$a{$$$$_}" } keys %a), "\n"; print join ("\n", map { "# $$$$_ is not set" } keys %b), "\n";' $$(DEFAULT_CONFIGS) $$(MERGE_CONFIGS) > $$@
 	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
-	+ yes "" | PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
+	+ yes "" | PATH=$8 $(MAKE) oldconfig V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 
       $3/$2-sanitized-headers/.installed: $3/$2-build/.config
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
   #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
-	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr headers_install
+	  + $(MAKE) headers_install PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr 
 	  mv $$(@D)/.installing $$@
 
 
     $3/$2-dirty-headers/.installed: $3/$2-build/.config
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
-  #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
-	  + $(MAKE) PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr headers_install
+  #	+ PATH=$8 $(MAKE) include/asm include/linux/version.h V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) 
+	  + $(MAKE) headers_install PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr
 	  # ignore errors on the following two lines because they only work for linux-2.6.31
 	  -cp -r --update $3/$2/arch/mips/include/asm/* $$(@D)/include/asm
 	  cp -r --update $3/$2-build/include/linux/* $$(@D)/include/linux
@@ -254,30 +254,30 @@ endif
 	  -cp -r --update $3/$2/include/asm-mips/* $$(@D)/include/asm
 	  mv $$(@D)/.installing $$@
 
-    $3/$2-build/vmlinux: $3/$2-build/.config $6 $7 $(10)
+    $3/$2-build/vmlinux: $3/$2-build/.config $3/$2-build/scripts/kallsyms $6 $7 $(10)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
 	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
 	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
 	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+	+ PATH=$8 $(MAKE) modules_install V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
 
      $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7 $(10)
-	+ yes "" | PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) oldconfig
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) bzImage
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ yes "" | PATH=$8 $(MAKE) oldconfig V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ PATH=$8 $(MAKE) bzImage V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ PATH=$8 $(MAKE) modules V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD=""
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
 	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
 	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
-	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true modules_install;
+	# PATH=$8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true;
+	+ PATH=$8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
 
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
 
     $3/$2-build/scripts/kallsyms: $3/$2-build/.config $(10)
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) prepare scripts
+	+ PATH=$8 $(MAKE) prepare scripts V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 	touch $$@
 
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
@@ -291,7 +291,7 @@ endif
     linux-config: $3/$2-build/.config
 
     $1-linux-mrproper: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) mrproper
+	+ PATH=$8 $(MAKE) mrproper V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 
     linux-mrproper: $1-linux-mrproper
 
