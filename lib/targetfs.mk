@@ -108,6 +108,70 @@ ifndef Configure_TargetFS
 
   TargetFS_All_Definitions = $($(foreach token,$1,$(if $($(token)_$2),$(token)))_$2)
 
+  First_Toolchain_Tuple = $(or $(call TargetFS_Search_Definition,$1,TOOLCHAIN_TARGET_TUPLE),$2,$(HOST_TUPLE))
+
+  # $1 = list of relative paths
+  # $2 = source root
+  # $3 = destination root
+  # $4 = name of variable onto which targets are appended
+  define TargetFS_Install_Files
+
+    $(if $1,
+
+      $(patsubst %,$3/%,$1): $3/%: $2/%
+	rm -rf $$@
+	$$(call Cpio_DupOne_WithLinks,$$(<D),$$(<F),$$(@D))
+
+      $4 += $(patsubst %,$3/%,$1)
+
+    )
+
+  endef
+
+  # $1 = list of relative paths
+  # $2 = source root
+  # $3 = destination root
+  # $4 = name of variable onto which targets are appended
+  # $5 = path filter
+  # $6 = path replacement
+  define TargetFS_Install_Files_Translate
+
+    $(if $(filter $5/%,$1),
+
+      $(call TargetFS_Install_Files,$(patsubst $5/%,%,$(filter $5/%,$1)),$2/$5,$3/$6,$4)
+    )
+
+  endef
+
+  # $1 = list of relative paths
+  # $2 = source root
+  # $3 = destination root
+  # $4 = name of variable onto which targets are appended
+  define TargetFS_Alias_Files
+
+    $(if $1,
+
+      $4 += $(patsubst %,$3/%,$1)
+
+    )
+
+  endef
+
+  # $1 = list of relative paths
+  # $2 = source root
+  # $3 = destination root
+  # $4 = name of variable onto which targets are appended
+  # $5 = path filter
+  # $6 = path replacement
+  define TargetFS_Alias_Files_Translate
+
+    $(if $(filter $5/%,$1),
+
+      $(call TargetFS_Alias_Files,$(patsubst $5/%,%,$(filter $5/%,$1)),$2/$5,$3/$6,$4)
+    )
+
+  endef
+
   # $1 = unique targetfs name (eg. "my-group/my-rootfs")
   # $2 = build top (eg "/path/to/build-top")
   # $3 = path code (eg "mipsel-glibc/toolchain host/tools PATH")
@@ -147,7 +211,7 @@ ifndef Configure_TargetFS
 
     $1_TARGETFS_TOOLCHAIN_TARGETS := $($(call TargetFS_Search_Definer,$3,TOOLCHAIN)_TARGETFS_TARGETS)
 
-    $1_TARGETFS_TUPLE             := $(or $(call TargetFS_Search_Definition,$3,TOOLCHAIN_TARGET_TUPLE),$5,$(HOST_TUPLE))
+    $1_TARGETFS_TUPLE             := $(call First_Toolchain_Tuple,$3,$5)
 
     $1_TARGETFS_DEFAULT_INSTALL_TAGS += $4
 
@@ -160,6 +224,7 @@ ifndef Configure_TargetFS
     $$($1_TARGETFS_PREFIX)/dev/loop0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ b 7 0
     $$($1_TARGETFS_PREFIX)/dev/tty:     ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 0
     $$($1_TARGETFS_PREFIX)/dev/tty0:    ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 4 0
+    $$($1_TARGETFS_PREFIX)/dev/ttyS0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 4 64
     $$($1_TARGETFS_PREFIX)/dev/console: ; mkdir -vp $$(@D); sudo $(MKNOD) -m 600 $$@ c 5 1
     $$($1_TARGETFS_PREFIX)/dev/ptmx:    ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 2
     $$($1_TARGETFS_PREFIX)/dev/null:    ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 1 3
@@ -168,28 +233,25 @@ ifndef Configure_TargetFS
     $$($1_TARGETFS_PREFIX)/dev/urandom: ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 1 9
     $$($1_TARGETFS_PREFIX)/dev/pts:     ; mkdir -vp $$@; touch $$@
     $$($1_TARGETFS_PREFIX)/proc:        ; mkdir -vp $$@; touch $$@
+    $$($1_TARGETFS_PREFIX)/sys:         ; mkdir -vp $$@; touch $$@
+    $$($1_TARGETFS_PREFIX)/tmp:         ; mkdir -vp $$@; touch $$@
     $$($1_TARGETFS_PREFIX)/var/log:     ; mkdir -vp $$@; touch $$@
-    $$($1_TARGETFS_PREFIX)/tmp:         ; mkdir -ma+rwx -vp $$@; touch $$@
 
-    $(foreach device_file_path, dev/console dev/tty dev/tty0 dev/null dev/random dev/zero dev/ptmx dev/pts proc var/log tmp,
+    $(foreach device_file_path, dev/console dev/tty dev/ttyS0 dev/tty0 dev/null dev/random dev/zero dev/ptmx dev/pts proc sys tmp var/log,
       $1_$(device_file_path): $2/$1/$(device_file_path)
       $1_$(device_file_path)_TARGETS := $2/$1/$(device_file_path)
     )
 
     # How to copy installable runtimes from the appropriate toolchain into our targetfs prefix
     $(foreach component,$(sort $(foreach targetfs,$3,$($(targetfs)_TARGETFS_INSTALLABLE_COMPONENT))),
-
-      $(patsubst %,$2/$1/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE)): $2/$1/%: $($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX)/%; rm -rf $$@; $$(call Cpio_DupOne_WithLinks,$$(<D),$$(<F),$$(@D))
-
-      $1_$(component)_TARGETS := $(patsubst %,$2/$1/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE))
-
+      $(call TargetFS_Install_Files_Translate,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS,$(call First_Toolchain_Tuple,$3,$5)/lib,lib)
+      $(call TargetFS_Install_Files,$(filter-out $(call First_Toolchain_Tuple,$3,$5)/lib/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE)),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS)
      )
 
     # Various aliases for subsets of components whose install rules are already defined
     $(foreach component,$(sort $(foreach targetfs,$3,$($(targetfs)_TARGETFS_ALIASED_COMPONENT))),
-
-      $1_$(component)_TARGETS := $(patsubst %,$2/$1/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE))
-
+      $(call TargetFS_Alias_Files_Translate,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS,$(call First_Toolchain_Tuple,$3,$5)/lib,lib)
+      $(call TargetFS_Alias_Files,$(filter-out $(call First_Toolchain_Tuple,$3,$5)/lib/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE)),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS)
      )
 
     $1-clean:

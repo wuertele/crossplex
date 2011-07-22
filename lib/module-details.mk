@@ -97,7 +97,7 @@ ifndef MODULE_DETAILS_LOADED
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--disable-threads,$4)	# BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec says: --enable-threads
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-threads=no,$4)	# crosstool.sh's way of syaing "--disable-threads"
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--with-newlib,$4)	# hack used by crosstool.sh to convince gcc-core that it doesn't need real glibc headers
-  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--without-newlib,$4)
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--without-newlib,$4)    # build stage3 libgcc WITH C libraries. 
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-threads=posix,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--disable-libgomp,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--disable-libssp,$4)
