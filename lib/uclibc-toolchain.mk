@@ -217,7 +217,7 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
     $(foreach library_name,$(UCLIBC_LIBRARIES_ulaso000),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),usr/lib/$(library_name).so.0.0.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_S100),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1.0.0))
     $(foreach library_name,$(UCLIBC_LIBRARIES_S300),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.3.0.0))
-    $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so))
+    $(foreach library_name,$(UCLIBC_LIBRARIES_S600p),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so.6))
     $(foreach library_name,$(UCLIBC_LIBRARIES_S1),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$3/lib/$(library_name).so))
     $(foreach library_name,$(UCLIBC_LIBRARIES_bfd),$(call Uclibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-2.19.1.so))
 
