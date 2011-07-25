@@ -77,6 +77,9 @@ ifndef Configure_TargetFS
   # How to build specific packages
   include $(CROSSPLEX_BUILD_SYSTEM)/module-details.mk
 
+  # How to overlay template hierarchies
+  include $(CROSSPLEX_BUILD_SYSTEM)/overlay.mk
+
   # Given a path "/some/path", expand it into a list of common executable paths like "/some/path/bin /some/path/sbin", etc.
   TargetFS_Subpaths = $(if $1,$(foreach subdir,bin sbin usr/bin usr/sbin usr/local/bin,$1/$(subdir)))
 
@@ -221,6 +224,8 @@ ifndef Configure_TargetFS
 
     $1_TargetFS_Tool_SENTINEL = $$(call TargetFS_Search_Definition,$3,$$1_INSTALLED_SENTINEL)
 
+    $$($1_TARGETFS_PREFIX): ; mkdir -p $$@
+
     $$($1_TARGETFS_PREFIX)/dev/loop0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ b 7 0
     $$($1_TARGETFS_PREFIX)/dev/tty:     ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 0
     $$($1_TARGETFS_PREFIX)/dev/tty0:    ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 4 0
@@ -232,12 +237,8 @@ ifndef Configure_TargetFS
     $$($1_TARGETFS_PREFIX)/dev/random:  ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 1 8
     $$($1_TARGETFS_PREFIX)/dev/urandom: ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 1 9
     $$($1_TARGETFS_PREFIX)/dev/pts:     ; mkdir -vp $$@; touch $$@
-    $$($1_TARGETFS_PREFIX)/proc:        ; mkdir -vp $$@; touch $$@
-    $$($1_TARGETFS_PREFIX)/sys:         ; mkdir -vp $$@; touch $$@
-    $$($1_TARGETFS_PREFIX)/tmp:         ; mkdir -vp $$@; touch $$@
-    $$($1_TARGETFS_PREFIX)/var/log:     ; mkdir -vp $$@; touch $$@
 
-    $(foreach device_file_path, dev/console dev/tty dev/ttyS0 dev/tty0 dev/null dev/random dev/zero dev/ptmx dev/pts proc sys tmp var/log,
+    $(foreach device_file_path, dev/console dev/tty dev/ttyS0 dev/tty0 dev/null dev/random dev/zero dev/ptmx dev/pts,
       $1_$(device_file_path): $2/$1/$(device_file_path)
       $1_$(device_file_path)_TARGETS := $2/$1/$(device_file_path)
     )
@@ -391,6 +392,23 @@ define TargetFS_Template
     $1_TARGETFS_TARGETS += $(patsubst $2/%,$($1_TARGETFS_PREFIX)/%,$(shell if [ -d $2 ]; then find $2 -mindepth 1 -type f -o -type l -o -type d; fi))
 
   )
+
+endef
+
+# $1 = unique targetfs name (eg. "my-rootfs")
+# $2 = path to template dir (eg. "fs-template/BASIC")
+define TargetFS_Template_Overlay
+
+  $(call Overlay_Map,$($1_TARGETFS_PREFIX),$2)
+
+endef
+
+# $1 = unique targetfs name (eg. "my-rootfs")
+define TargetFS_Install_Overlay
+
+  $(foreach target,$($($1_TARGETFS_PREFIX)_OVERLAY_TARGETS),$(eval $(call Overlay_Install,$(target),$($1_TARGETFS_PREFIX))))
+
+  $1_TARGETFS_TARGETS += $($($1_TARGETFS_PREFIX)_OVERLAY_TARGETS)
 
 endef
 
@@ -818,9 +836,7 @@ endef
     # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
     $(if $2,,$(error must specify software version for linux_headers))
 
-    $(sort $(dir $(call Complete_Targetfs_Target_List,$1))): $(call Complete_Targetfs_Target_List,$1)
-
-    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) | $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1),$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
     $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
 
