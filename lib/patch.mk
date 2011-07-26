@@ -90,7 +90,7 @@ define Patch_Rules_Core
       $(patsubst $1/%.patch,$3/.applied-%,$(wildcard $1/*.patch)): $3/.applied-%: $1/%.patch $3/.repliduplicated
 	# Check for a preexisting .applied- file and unroll it and its dependents if necessary
 	+if [ -f $$@ ] ; then $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $$(@D)/.unapplied-$$(*F) ; fi
-	cd $$(@D) && patch -g 0 -f -p1 < $$<
+	cd $$(@D) && patch -l -g 0 -f -p1 < $$<
 	cp -f $$< $$@
 	$(if $(GIT),cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F))
 	rm -f $$(@D)/.unapplied-$$(*F)
