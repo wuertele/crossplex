@@ -198,11 +198,14 @@ ifndef Configure_Kernel
 
     $1_LINUX_MAKE_OPTS := $(if $(filter i686-%,$4),ARCH=x86)
     $1_LINUX_MAKE_OPTS += $(if $(filter mips%,$4),ARCH=mips)
-    $1_LINUX_MAKE_OPTS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="$(strip $5 $6)")
 
 ifneq ($4,$(HOST_TUPLE))
     $1_LINUX_MAKE_OPTS += $(if $4,CROSS_COMPILE=$4-)
 endif
+
+    $1_LINUX_MAKE_OPTS_NOINITRAMFS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="")
+
+    $1_LINUX_MAKE_OPTS += $(if $5$6,CONFIG_INITRAMFS_SOURCE="$(strip $5 $6)")
 
     # Convenience targets.  If you want to just unpack and patch a kernel, run:
     # make mykernel-linux-source-prepared
@@ -253,6 +256,10 @@ endif
 	  # ignore errors on the following two lines because they only work (and are only necessary) for linux-2.6.18
 	  -cp -r --update $3/$2/include/asm-mips/* $$(@D)/include/asm
 	  mv $$(@D)/.installing $$@
+
+    $3/$2-build/vmlinux.noinitramfs: $3/$2-build/.config $3/$2-build/scripts/kallsyms $(10)
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS_NOINITRAMFS)
+	touch $$@
 
     $3/$2-build/vmlinux: $3/$2-build/.config $3/$2-build/scripts/kallsyms $6 $7 $(10)
 	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
