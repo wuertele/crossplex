@@ -303,7 +303,7 @@ define TargetFS_Install_App_Files
 	@echo d=$$(<D)
 	@echo f=$$(<F)
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
-	$(if $(filter STRIP,$3 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then $$($1_TARGETFS_BUILD_ENV) $$($1_TARGETFS_TUPLE)-strip $$@ || echo WARNING CANT STRIP $$@; fi)
+	$(if $(filter STRIP,$3 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then if echo $$@ | egrep '\.ko$$$$'>/dev/null ; then striparg=-g; fi; $$($1_TARGETFS_BUILD_ENV) $$($1_TARGETFS_TUPLE)-strip $$$$striparg $$@ || echo WARNING CANT STRIP $$@; fi)
 
     $1_TARGETFS_TARGETS += $$(patsubst %,$($1_TARGETFS_PREFIX)/%,$2)
 
@@ -321,7 +321,7 @@ define TargetFS_Install_App_Dev_Files
 	@echo d=$$(<D)
 	@echo f=$$(<F)
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
-	$(if $(filter STRIP,$3 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then $$($1_TARGETFS_BUILD_ENV) $$($1_TARGETFS_TUPLE)-strip $$@ || echo WARNING CANT STRIP $$@; fi)
+	$(if $(filter STRIP,$3 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a -x $$@ -a ! -h $$@ ] ; then if echo $$@ | egrep '\.ko$$$$'>/dev/null ; then striparg=-g; fi; $$($1_TARGETFS_BUILD_ENV) $$($1_TARGETFS_TUPLE)-strip $$$$striparg $$@ || echo WARNING CANT STRIP $$@; fi)
 
     $1_TARGETFS_TARGETS += $$(patsubst %,$($1_TARGETFS_BUILDLIB)/%,$2)
 
@@ -685,7 +685,7 @@ endef
     $(patsubst %,$4/%,$6): $4/%: $3/%
 	@echo CrossPlex installing $$(<F) from $$(<D) to $$(@D)
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
-	$(if $(filter STRIP,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-strip $$@ -o $$@.stripped || echo WARNING CANT STRIP $$@; if [ -f $$@.stripped ] ; then mv -f $$@.stripped $$@ ; fi ; fi)
+	$(if $(filter STRIP,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then if echo $$@ | egrep '\.ko$$$$'>/dev/null ; then striparg=-g; fi; $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-strip $$$$striparg $$@ -o $$@.stripped || echo WARNING CANT STRIP $$@; if [ -f $$@.stripped ] ; then mv -f $$@.stripped $$@ ; fi ; fi)
 	-file $$@
 	$(if $(filter LDD,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) ldd $$@ || echo WARNING CANT LDD $$@; fi)
 
@@ -838,7 +838,7 @@ endef
 
     $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1),$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
-    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux.noinitramfs
 
   endef
 
@@ -847,7 +847,7 @@ endef
   # $2 = linux kernel version
   define TargetFS_initramfs_Kernel_DEVTARGETS
 
-    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+    $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux.noinitramfs
 
   endef
 
@@ -864,7 +864,7 @@ endef
 
     $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),,,,$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
-    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux
 
   endef
 
@@ -872,7 +872,7 @@ endef
   # $2 = linux kernel version
   define TargetFS_nfsroot_Kernel_DEVTARGETS
 
-    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/scripts/kallsyms
+    $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux
 
   endef
 
