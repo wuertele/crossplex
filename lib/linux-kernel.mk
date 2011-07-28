@@ -258,7 +258,7 @@ endif
 	  mv $$(@D)/.installing $$@
 
     $3/$2-build/vmlinux.noinitramfs: $3/$2-build/.config $3/$2-build/scripts/kallsyms $(10)
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS_NOINITRAMFS)
+	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$(patsubst CONFIG_INITRAMFS_SOURCE="%",CONFIG_INITRAMFS_SOURCE="",$$($1_LINUX_MAKE_OPTS))
 	touch $$@
 
     $3/$2-build/vmlinux: $3/$2-build/.config $3/$2-build/scripts/kallsyms $6 $7 $(10)
