@@ -322,6 +322,8 @@ endif
 
     $1_LINUX_DIRTY_HEADERS := $3/$2-dirty-headers/include
 
+    $1-linux-uncompressed-image_PATH := $3/$2-build/vmlinux
+
     $1-linux-compressed-image_PATH := $3/$2-build/vmlinuz
 
     $1-linux-compressed-image: $3/$2-build/vmlinuz
