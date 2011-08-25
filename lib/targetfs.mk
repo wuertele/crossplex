@@ -499,6 +499,8 @@ endef
       $3$4/.built:
 	mkdir -p $$(@D)
 	if [ -f $$(@D)/.building ]; then false; fi
+	# verifying that configuration matched any previous builds
+	if [ -f $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS ]; then echo $($(notdir $(patsubst %/,%,$(dir $3)))_CONFIG_DETAILS) > $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS.compare; diff $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS*; fi
 	touch $$(@D)/.building
 	$(if $5,$5,@echo no pre-configure steps)
 	$(if $6,cd $3 && env -i $($1_TARGETFS_BUILD_ENV) $($2_AUTORECONF_ENV) autoreconf -v --install --force,@echo skipping autoreconf)
