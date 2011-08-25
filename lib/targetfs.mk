@@ -592,7 +592,7 @@ endef
   # Create a new one if one doesn't exist yet.
   # $1 = targetfs
   # $2 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_Counting,$1,$2))$(eval $(call TargetFS_Build_Dir_Counting,$1,$2)_CONFIG_DETAILS = $1 $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
+  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_Counting,$1,$2))$(eval $(call TargetFS_Build_Dir_Counting,$1,$2)_CONFIG_DETAILS = $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
 
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
