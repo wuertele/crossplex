@@ -556,11 +556,11 @@ endef
 
       )
 
-      $(patsubst %,$6/%,$7): $3$4/$5
-
       $3$4/$5_STAGE_SENTINEL_TARGET := $3$4/$5
 
     )
+
+    $(patsubst %,$6/%,$7): $3$4/$5
 
     $1_MODULES += $2
     $1_$2_DESTDIR := $6
