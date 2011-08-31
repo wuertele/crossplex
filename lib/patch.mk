@@ -244,6 +244,8 @@ define Patch_Order_Rules
     $2_SOURCE_PREPARED := $2/.repliduplicated $$($2_PATCHES) $$(sort $$($2_BUILD_CONFIGS))
     $2-source-prepared: $2/.repliduplicated $$($2_PATCHES) $$(sort $$($2_BUILD_CONFIGS))
 
+    source-prepared: $2-source-prepared
+
     ifeq "$(MAKECMDGOALS)" "$2/new.patch"
         include $(dir $2)/$(notdir $2)-compare-patchorder.mk
         $2/new.patch: FORCE

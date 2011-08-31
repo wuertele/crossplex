@@ -496,6 +496,9 @@ endef
 	mkdir -p $$(@D)
 	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) TAGS
 
+      $3$4-buildclean:
+	rm -rf $3$4
+
       $3$4/.built:
 	mkdir -p $$(@D)
 	if [ -f $$(@D)/.building ]; then false; fi
@@ -517,6 +520,13 @@ endef
 
       $1_$2_BUILD_DIR := $3$4
 
+      $1-$2-buildclean: $3$4-buildclean
+      $1-buildclean: $3$4-buildclean
+      $2-buildclean: $3$4-buildclean
+
+      $1-$2-clean: $3$4-buildclean
+      $1-clean: $3$4-buildclean
+      $2-clean: $3$4-buildclean
     )
 
   endef
@@ -583,16 +593,23 @@ endef
   # $2 = space-separated list of fields to filter and concatenate
   TargetFS_Build_Dir_Var_Count = $(words $(filter $(call cmerge,-,$(subst /,.,$(subst UNIQBUILD,UNIQBUILD.$1,buildsdir-name-$(firstword $2))))%,$(.VARIABLES)))
 
+  # OPTION 1
   # Generate a directory name unique to the list of fields in $2, but using an incrementing "confX" string
   # $1 = targetfs
   # $2 = space-separated list of fields to filter and concatenate
   TargetFS_Build_Dir_Counting = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(firstword $2)-conf$(call TargetFS_Build_Dir_Var_Count,$1,$2))
 
+  # OPTION 2
+  # Generate a directory name unique to the list of fields in $2, but using an md5sum of the variable name
+  # $1 = targetfs
+  # $2 = space-separated list of fields to filter and concatenate
+  TargetFS_Build_Dir_md5sum = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(firstword $2)-$(shell echo $(call TargetFS_Build_Dir_Var,$1,$2) | md5sum | cut -b1-7))
+
   # Discover the directory name specifically defined to be unique to the list of fields in $2
   # Create a new one if one doesn't exist yet.
   # $1 = targetfs
   # $2 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_Counting,$1,$2))$(eval $(call TargetFS_Build_Dir_Counting,$1,$2)_CONFIG_DETAILS = $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
+  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_md5sum,$1,$2))$(eval $(call TargetFS_Build_Dir_md5sum,$1,$2)_CONFIG_DETAILS = $1 $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
 
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
