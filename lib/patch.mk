@@ -92,7 +92,7 @@ define Patch_Rules_Core
 	+if [ -f $$@ ] ; then $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $$(@D)/.unapplied-$$(*F) ; fi
 	cd $$(@D) && patch -l -g 0 -f -p1 < $$<
 	cp -f $$< $$@
-	$(if $(GIT),cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F))
+	$(if $(GIT),if [ -d $$(@D)/.git ]; then cd $$(@D) && $(GIT) add -f . && $(GIT) commit -q -m $$(*F); fi)
 	rm -f $$(@D)/.unapplied-$$(*F)
 
       # This is a system of unrolling patches.  It depends on $(dir $3)/$3-patchorder.mk properly ordering the unroll.
@@ -163,7 +163,8 @@ define Patch_Rules
     else
 	rm -rf $$(@D)
 	$(call Cpio_Findup,$2,$3)
-	$(if $(GIT),cd $$(@D) && $(GIT) init && $(GIT) add -f . && $(GIT) commit -q -m "initial commit" && $(GIT) tag $1 && $(GIT) tag base)
+	# Only initialize a git repo in the working dir if a) GIT is defined and b) GIT_FILTER is either empty or matches the package
+	$(if $(strip $(if $(GIT_FILTER),$(foreach thisfilt,$(GIT_FILTER),$(filter $(thisfilt)%,$1)),$(GIT))),cd $$(@D) && $(GIT) init && $(GIT) add -f . && $(GIT) commit -q -m "initial commit" && $(GIT) tag $1 && $(GIT) tag base)
 	touch $$@
     endif
   endif
@@ -173,6 +174,8 @@ define Patch_Rules
 
     $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean):
 	rm -rf $3
+
+    $1-sourceclean: $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean)
 
     sourceclean: $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_replidupliclean)
 
