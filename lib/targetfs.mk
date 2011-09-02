@@ -434,16 +434,43 @@ endef
                      $(if $(filter $(module)_LICENSE,$(.VARIABLES)),
                           $(call Patchify_Rules,$(filter $(module)%,$7),$(UNPACKED_SOURCES),$($($(module)_LICENSE)_SOURCES),$4,$5,$($($(module)_LICENSE)_SOURCES),$6)
 
-      $4/$5/$3_SOURCE_PREPARED += $4/$5/$3/.src_plugin_$(module)_linked
+      $4/$5/$3_SOURCE_PREPARED += $(if $($(module)_SRC_PLUGIN_SOFTLINK),$4/$5/$3/.src_plugin_$(module)_softlinked,$4/$5/$3/.src_plugin_$(module)_linked)
 
       $4/$5/$3/.src_plugin_$(module)_linked: $4/$5/$3/.repliduplicated $$($4/$5/$(filter $(module)%,$7)_SOURCE_PREPARED)
 	rm -f $$@
 	cd $4/$5/$(filter $(module)%,$7) $(foreach path,$(or $($(module)_COPY_PATHS),.),&& find $(path) | grep -v .repliduplicated | grep -v .unpacked | cpio -aplmdu $$(@D)/$(or $($(module)_COPY_TARGET),.))
 	touch $$@
 
+      $4/$5/$3/.src_plugin_$(module)_softlinked: $4/$5/$3/.repliduplicated $$($4/$5/$(filter $(module)%,$7)_SOURCE_PREPARED)
+	rm -f $$@
+	$(if $($(module)_COPY_PATHS),$(foreach path,$($(module)_COPY_PATHS),rm -f $$(@D)/$($(module)_COPY_TARGET)/$(path)),rm -f $$(@D)/$(or $($(module)_COPY_TARGET),$(module)))
+	cd $$(@D) && $(if $($(module)_COPY_PATHS),$(foreach path,$($(module)_COPY_PATHS),ln -sf $4/$5/$(filter $(module)%,$7)/$(path) $(or $($(module)_COPY_TARGET),.)),ln -sf $4/$5/$(filter $(module)%,$7) $(or $($(module)_COPY_TARGET),.))
+	touch $$@
+
+      $(module)-prepare-source: $$($4/$5/$(filter $(module)%,$7)_SOURCE_PREPARED)
+
+      $4/$5/$3/$(filter $(module)%,$7)-rmhardlinks:
+	# Beware that this cleaning feature is unimplemented.
+
+      $4/$5/$3/$(filter $(module)%,$7)-rmsoftlinks:
+	rm -f $4/$5/$3/.src_plugin_$(module)_softlinked
+	$(if $($(module)_COPY_PATHS),$(foreach path,$($(module)_COPY_PATHS),rm -f $4/$5/$3/$($(module)_COPY_TARGET)/$(path)),rm -f $4/$5/$3/$(or $($(module)_COPY_TARGET),$(module)))
+
+      $4/$5/$3/$(filter $(module)%,$7)-sourceclean: $4/$5/$3/$(if $($(module)_SRC_PLUGIN_SOFTLINK),$(filter $(module)%,$7)-rmsoftlinks,$(filter $(module)%,$7)-rmhardlinks)
+
+      $(module)-sourceclean: $4/$5/$3/$(filter $(module)%,$7)-sourceclean $(filter $(module)%,$7)-sourceclean
+
+      $2-sourceclean: $(module)-sourceclean
+
 )))
 
       $4/$5/$3_SOURCEPREPPED := yes
+
+      $1_$2_SOURCE_PREPARED += $4/$5/$3_SOURCE_PREPARED
+
+      $2-prepare-source: $4/$5/$3_SOURCE_PREPARED
+
+      $2-sourceclean: $3-sourceclean
 
     )
 
@@ -481,6 +508,8 @@ endef
       $1_$2-build-dependencies $3$4/.built: $($1_TARGETFS_TOOLCHAIN_TARGETS)				# can't build without a toolchain
       $1_$2-build-dependencies $3$4/.built: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
       $1_$2-build-dependencies $3$4/.building: $$($3_SOURCE_PREPARED)					# this variable contains the sentinels that are touched when this source is completely untarred and patched
+
+      $1_$2-build-dependencies $3$4/.built: $(foreach source_dependency,$($2_SOURCE_DEPENDENCIES),$($($1_$(source_dependency)_SOURCE_PREPARED)))
 
       $1_$2-build-dependencies $3$4/.built: $(sort $(patsubst %,$$($1_%_DEV_TARGETS),$($2_BUILD_DEPENDENCIES)))	# these are the **_DEV_TARGETS (staged files) for each package that must be built before this one
       #this next line is a better version of the previous line.  maybe delete the previous line...
