@@ -151,7 +151,7 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
   # $1 = list of build tags.  We're looking for the value of THREAD=
   # $2 = list of sources
-  GCC_SRC_Plugins = SRC_PLUGIN=$(filter mpfr-%,$1) SRC_PLUGIN=$(filter gmp-%,$1)
+  GCC_SRC_Plugins = SRC_PLUGIN=$(filter mpfr-%,$1) SRC_PLUGIN=$(filter gmp-%,$1) SRC_PLUGIN=$(filter mpc-%,$1)
 
   INSTALL_KERNEL_HEADERS    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
   INSTALL_BINUTILS          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)

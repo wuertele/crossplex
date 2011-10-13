@@ -39,6 +39,7 @@ ifndef MODULE_DETAILS_LOADED
   binutils_CONFIGURE_ARGS =  --prefix=/ --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
   binutils_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)),--target=$($1_TARGETFS_TUPLE))
   binutils_CONFIGURE_ARGS += --disable-nls
+  binutils_CONFIGURE_ARGS += --disable-werror
   binutils_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
 
   binutils_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR=ar
@@ -84,7 +85,7 @@ ifndef MODULE_DETAILS_LOADED
 
   Gcc_Arch = $(sort $(foreach arch,$(patsubst GCC_ARCHMAP_%,%,$(filter GCC_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(GCC_ARCHMAP_$(arch)),$1),$(arch))))
 
-  gcc_BUILD_DEPENDENCIES += gmp mpfr
+  gcc_BUILD_DEPENDENCIES += gmp mpfr mpc
 
   gcc_CONFIGURE_ARGS  = --prefix=/
   gcc_CONFIGURE_ARGS += --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
@@ -114,6 +115,7 @@ ifndef MODULE_DETAILS_LOADED
   gcc_CONFIGURE_ARGS += $(if $(filter NOSHARED,$4),--disable-shared,--enable-shared)
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,gmp),--with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp))
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpfr),--with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr))
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpc),--with-mpc=$(call $1_TargetFS_Tool_DESTDIR,mpc))
 
   gcc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
   gcc_BUILD_ENVIRONMENT += $$(if $$(call $1_TargetFS_Tool_DESTDIR,gmp),CFLAGS="-I$$(call $1_TargetFS_Tool_DESTDIR,gmp)")
@@ -324,6 +326,22 @@ ifndef MODULE_DETAILS_LOADED
   mpfr_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   mpfr_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
   mpfr_CONFIGURE_ARGS += --enable-thread-safe --enable-shared --disable-static --with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp)
+
+  ## mpc
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += mpc
+
+  CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS += mpc
+  mpc_COPY_TARGET := mpc
+
+  mpc_LICENSE := LGPL
+
+  mpc_BUILD_DEPENDENCIES += gmp mpfr
+
+  mpc_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  mpc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  mpc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
+  mpc_CONFIGURE_ARGS += --enable-static --disable-shared --with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp)  --with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr)
 
  ## Syslinux
 

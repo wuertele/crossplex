@@ -237,10 +237,8 @@ define Patch_Order_Rules
     .PRECIOUS: $(dir $2)/$(notdir $2)-compare-patchorder.mk
 
     # As long as the user is not just doing "make clean", include the patch order rules we just defined
-    ifneq "$(MAKECMDGOALS)" "clean"
-      ifneq "$(MAKECMDGOALS)" "ultraclean"
-        include $(dir $2)/$(notdir $2)-patchorder.mk
-      endif
+    ifeq ($(filter clean% %clean help help-%,$(MAKECMDGOALS)),)
+      include $(dir $2)/$(notdir $2)-patchorder.mk
     endif
 
     # A complete preparation of a source directory includes a) unpacking it, b) applying patches, and c) copying build-configs.
@@ -250,8 +248,10 @@ define Patch_Order_Rules
     source-prepared: $2-source-prepared
 
     ifeq "$(MAKECMDGOALS)" "$2/new.patch"
+      ifeq ($(filter clean% %clean help help-%,$(MAKECMDGOALS)),)
         include $(dir $2)/$(notdir $2)-compare-patchorder.mk
         $2/new.patch: FORCE
+      endif
     endif
 
     $2_NEW_PATCH_BASENAME := new-$(shell echo $$$$)

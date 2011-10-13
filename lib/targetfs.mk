@@ -466,9 +466,9 @@ endef
 
       $4/$5/$3_SOURCEPREPPED := yes
 
-      $1_$2_SOURCE_PREPARED += $4/$5/$3_SOURCE_PREPARED
+      $1_$2_SOURCE_PREPARED += $$($4/$5/$3_SOURCE_PREPARED)
 
-      $2-prepare-source: $4/$5/$3_SOURCE_PREPARED
+      $2-prepare-source: $$($4/$5/$3_SOURCE_PREPARED)
 
       $2-sourceclean: $3-sourceclean
 
@@ -530,7 +530,7 @@ endef
 
       $3$4/.built:
 	mkdir -p $$(@D)
-	if [ -f $$(@D)/.building ]; then false; fi
+	if [ -f $$(@D)/.building ]; then echo Warning package already was building.  Output could be corrupted ; fi
 	# verifying that configuration matched any previous builds
 	if [ -f $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS ]; then echo $($(notdir $(patsubst %/,%,$(dir $3)))_CONFIG_DETAILS) > $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS.compare; diff $(patsubst %/,%,$(dir $3))/CONFIG_DETAILS*; fi
 	touch $$(@D)/.building
@@ -546,8 +546,6 @@ endef
 	touch $$@
 
       $3$4_BUILD_TARGET := $3$4/.built
-
-      $1_$2_BUILD_DIR := $3$4
 
       $1-$2-buildclean: $3$4-buildclean
       $1-buildclean: $3$4-buildclean
@@ -605,6 +603,8 @@ endef
     $1_$2_DESTDIR := $6
     $1_$2_INSTALLED_SENTINEL := $3$4/$5
 
+    $1_$2_BUILD_DIR := $3$4
+
   endef
 
   # $1 = list of install tags
@@ -638,7 +638,7 @@ endef
   # Create a new one if one doesn't exist yet.
   # $1 = targetfs
   # $2 = space-separated list of fields to filter and concatenate
-  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_md5sum,$1,$2))$(eval $(call TargetFS_Build_Dir_md5sum,$1,$2)_CONFIG_DETAILS = $1 $2)$($(call TargetFS_Build_Dir_Var,$1,$2)))
+  TargetFS_Build_Dir = $(or $($(call TargetFS_Build_Dir_Var,$1,$2)),$(eval $(call TargetFS_Build_Dir_Var,$1,$2) := $(call TargetFS_Build_Dir_md5sum,$1,$2))$(eval $(call TargetFS_Build_Dir_md5sum,$1,$2)_CONFIG_DETAILS = $(subst UNIQBUILD,UNIQBUILD.$1,$2))$($(call TargetFS_Build_Dir_Var,$1,$2)))
 
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
@@ -782,6 +782,8 @@ endef
   TargetFS_Autoconf_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
 
   TargetFS_Make_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
+
+  TargetFS_Module_Name = $(or $(call TargetFS_Autoconf_Module,$1),$(call TargetFS_Make_Module,$1))
 
   # $1 = targetfs name (eg "daves_favorite_targetfs")
   # $2 = list of software versions to install
