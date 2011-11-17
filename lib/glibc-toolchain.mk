@@ -153,20 +153,27 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
 
   # $1 = list of build tags.  We're looking for the value of THREAD=
   # $2 = list of sources
-  GCC_SRC_Plugins = SRC_PLUGIN=$(filter mpfr-%,$2) SRC_PLUGIN=$(filter gmp-%,$2)
+  GCC_SRC_Plugins_Glibc =  SRC_PLUGIN=$(filter mpfr-%,$2) 
+  GCC_SRC_Plugins_Glibc += SRC_PLUGIN=$(filter gmp-%,$2)
+  GCC_SRC_Plugins_Glibc += SRC_PLUGIN=$(filter mpc-%,$2)
+  GCC_SRC_Plugins_Glibc += SRC_PLUGIN=$(filter ppl-%,$2)
+  GCC_SRC_Plugins_Glibc += SRC_PLUGIN=$(filter cloog-parma-%,$2)
+  GCC_SRC_Plugins_Glibc += SRC_PLUGIN=$(filter libelf-%,$2)
 
   # $1 = list of sources
   Glibc_NeedSemH = $(and $(filter glibc-2.5,$1),$(filter gcc-3.4.6,$1),NEEDSEMH)
 
-  INSTALL_KERNEL_HEADERS    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
-  INSTALL_BINUTILS          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
-  INSTALL_GCC_CORE_NOSHARED = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED SYSROOT=$1/gcc-core-noshared-sysroot MAKEARGS=stage1 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
-  INSTALL_GLIBC_HEADERS     = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-headers-sysroot MAKEARGS=headers ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
-  INSTALL_GLIBC_STARTFILES  = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-startfiles-sysroot MAKEARGS=startfiles ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
-  INSTALL_GCC_CORE_SHARED   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/gcc-core-withshared-libgcc-sysroot MAKEARGS=stage2 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
-  INSTALL_GLIBC_FINAL       = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-final-sysroot ENV=-i MAKEARGS=final $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
-  INSTALL_GCC_FINAL         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5 $(call GCC_SRC_Plugins,$5,$3),,$6)
-  INSTALL_GDB               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
+#  INSTALL_CUSTOM_LIBS_Glibc       = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gmp-%,$3),NOSTAGE NODESTDIR FINDUPBUG $5,,$6)
+#  INSTALL_CUSTOM_LIBS_Glibc       += $(call TargetFS_Install_Autoconf,$1/$2,$(filter mpfr-% mpc-% ppl-% cloog-parma-% libelf-%,$3),NOSTAGE NODESTDIR $5,,$6)
+  INSTALL_KERNEL_HEADERS_Glibc    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
+  INSTALL_BINUTILS_Glibc          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
+  INSTALL_GCC_CORE_NOSHARED_Glibc = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED SYSROOT=$1/gcc-core-noshared-sysroot MAKEARGS=stage1 $5 $(call GCC_SRC_Plugins_Glibc,$5,$3),,$6)
+  INSTALL_GLIBC_HEADERS_Glibc     = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-headers-sysroot MAKEARGS=headers ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
+  INSTALL_GLIBC_STARTFILES_Glibc  = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-startfiles-sysroot MAKEARGS=startfiles ENV=-i $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
+  INSTALL_GCC_CORE_SHARED_Glibc   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/gcc-core-withshared-libgcc-sysroot MAKEARGS=stage2 $5 $(call GCC_SRC_Plugins_Glibc,$5,$3),,$6)
+  INSTALL_GLIBC_FINAL_Glibc       = $(call TargetFS_Install_Autoconf,$1/$2,$(filter glibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/glibc-final-sysroot ENV=-i MAKEARGS=final $5 $(call Glibc_SRC_Plugins,$5,$3) $(call Glibc_NeedSemH,$3),,$6)
+  INSTALL_GCC_FINAL_Glibc         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5 $(call GCC_SRC_Plugins_Glibc,$5,$3),,$6)
+  INSTALL_GDB_Glibc               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
 
   # $1 = build top
   # $2 = toolchain (targetfs) name
@@ -181,38 +188,38 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
     $(foreach sysroot,gcc-core-noshared glibc-headers glibc-startfiles glibc-final gcc-core-withshared-libgcc gcc-final gdb,$(eval $(call Configure_TargetFS,$2/$(sysroot)-sysroot,$1,$5,,$3)))
 
     # GCC Core (no shared libs) build depends on kernel headers and binutils
-    $(eval $(call INSTALL_BINUTILS,$2,gcc-core-noshared-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,gcc-core-noshared-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,gcc-core-noshared-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,gcc-core-noshared-sysroot,$4,$3,$6,$7))
 
     # Glibc Headers build depends on binutils, gcc-core-noshared, and kernel headers
-    $(eval $(call INSTALL_BINUTILS,$2,glibc-headers-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,glibc-headers-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_CORE_NOSHARED,$2,glibc-headers-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,glibc-headers-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,glibc-headers-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_CORE_NOSHARED_Glibc,$2,glibc-headers-sysroot,$4,$3,$6,$7))
 
     # Glibc startfiles build depends on binutils, gcc-core-noshared, kernel headers, and glibc headers
-    $(eval $(call INSTALL_BINUTILS,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_CORE_NOSHARED,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GLIBC_HEADERS,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_CORE_NOSHARED_Glibc,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GLIBC_HEADERS_Glibc,$2,glibc-startfiles-sysroot,$4,$3,$6,$7))
 
     # GCC Core (shared libs) build depends on binutils, kernel headers, glibc headers, and glibc startfiles
-    $(eval $(call INSTALL_BINUTILS,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GLIBC_HEADERS,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GLIBC_STARTFILES,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GLIBC_HEADERS_Glibc,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GLIBC_STARTFILES_Glibc,$2,gcc-core-withshared-libgcc-sysroot,$4,$3,$6,$7))
 
     # Glibc final build depends on binutils, kernel headers, glibc headers, and GCC Core (shared libs)
-    $(eval $(call INSTALL_BINUTILS,$2,glibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,glibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GLIBC_HEADERS,$2,glibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_CORE_SHARED,$2,glibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,glibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,glibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GLIBC_HEADERS_Glibc,$2,glibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_CORE_SHARED_Glibc,$2,glibc-final-sysroot,$4,$3,$6,$7))
 
     # Toolchain:  depends on binutils, glibc final, gcc final, and gdb
-    $(eval $(call INSTALL_BINUTILS,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GLIBC_FINAL,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_FINAL,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GDB,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Glibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Glibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GLIBC_FINAL_Glibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_FINAL_Glibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GDB_Glibc,$2,toolchain,$4,$3,$6,$7))
 
     $2/toolchain_RUNTIMES  += glibc
     $2/toolchain_TOOLCHAIN += glibc
@@ -224,7 +231,7 @@ ifndef GLIBC_TOOLCHAIN_MAKE_LOADED
     # If a module calls out one of these component libraries as a runtime dependency, the module's TargetFS should know how to copy it from here
     $(foreach library_name,$(GLIBC_LIBRARIES_SO),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so))
     $(foreach library_name,$(GLIBC_LIBRARIES_S1) $(GLIBC_LIBRARIES_1UAS) $(GLIBC_LIBRARIES_6U) $(GLIBC_LIBRARIES_2UAS) $(GLIBC_LIBRARIES_2US),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-$(patsubst glibc-%,%,$(filter glibc-%,$4)).so))
-    $(foreach library_name,$(GLIBC_LIBRARIES_S1),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$(if $(filter mips%,$3),lib/$(library_name).so.1,lib/$(library_name)-linux.so.2)))
+    $(foreach library_name,$(GLIBC_LIBRARIES_S1),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),$(if $(filter mips%,$3),lib/$(library_name).so.1,$(if $(filter arm-%-gnueabi,$3),lib/$(library_name)-linux.so.3,lib/$(library_name)-linux.so.2))))
     $(foreach library_name,$(GLIBC_LIBRARIES_1US) $(GLIBC_LIBRARIES_1UAS),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name).so.1))
     $(foreach library_name,$(GLIBC_LIBRARIES_1US),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),lib/$(library_name)-1.0.so))
     $(foreach library_name,$(GLIBC_LIBRARIES_1US) $(GLIBC_LIBRARIES_1UAS) $(GLIBC_LIBRARIES_2UAS) $(GLIBC_LIBRARIES_2US) $(GLIBC_LIBRARIES_0UAS) $(GLIBC_LIBRARIES_6U),$(call Glibc_Sub_Lib_Depends,$2/toolchain,$(library_name),usr/lib/$(library_name).so))

@@ -83,9 +83,16 @@ ifndef Configure_TargetFS
   # Given a path "/some/path", expand it into a list of common executable paths like "/some/path/bin /some/path/sbin", etc.
   TargetFS_Subpaths = $(if $1,$(foreach subdir,bin sbin usr/bin usr/sbin usr/local/bin,$1/$(subdir)))
 
+  # Given a path "/some/path", expand it into a list of common library paths like "/some/path/lib /some/path/usr/lib", etc.
+  TargetFS_Lib_Subpaths = $(if $1,$(foreach subdir,lib usr/lib usr/local/lib usr/shar/lib,$1/$(subdir)))
+
   # Given a list of targetfs names and potentially a special token "PATH", expand into a colon-separated path of common executable paths rooted at each targetfs dir.
   # The special "PATH" token gets replaced by the host PATH environment variable.
   TargetFS_Decode_Path = $(call cmerge,:,$(foreach token,$1,$(if $(filter PATH,$(token)),$(PATH),$(if $(filter $2,$(token)),$(call TargetFS_Subpaths,$3/$2),$(call TargetFS_Subpaths,$($(token)_TARGETFS_PREFIX))))))
+
+  # Given a list of targetfs names and potentially a special token "PATH", expand into a colon-separated path of common library paths rooted at each targetfs dir.
+  # The special "PATH" token gets replaced by the host LD_LIBRARY_PATH environment variable.
+  TargetFS_Decode_Lib_Path = $(call cmerge,:,$(foreach token,$1,$(if $(filter PATH,$(token)),$(LD_LIBRARY_PATH),$(if $(filter $2,$(token)),$(call TargetFS_Lib_Subpaths,$3/$2),$(call TargetFS_Lib_Subpaths,$($(token)_TARGETFS_PREFIX))))))
 
   # Given a path "/some/path", expand it into a list of common include paths like "/some/path/include /some/path/usr/include", etc.
   TargetFS_Subincludes = $(if $1,$(foreach subdir,include usr/include usr/local/include,-I$1/$(subdir)))
@@ -113,35 +120,42 @@ ifndef Configure_TargetFS
 
   First_Toolchain_Tuple = $(or $(call TargetFS_Search_Definition,$1,TOOLCHAIN_TARGET_TUPLE),$2,$(HOST_TUPLE))
 
-  # $1 = list of relative paths
-  # $2 = source root
-  # $3 = destination root
-  # $4 = name of variable onto which targets are appended
+  # $1 = TargetFS name 
+  # $2 = list of relative paths
+  # $3 = source root
+  # $4 = destination root
+  # $5 = name of variable onto which targets are appended
+  # $6 = Install Tags 
   define TargetFS_Install_Files
 
-    $(if $1,
+    $(if $2,
 
-      $(patsubst %,$3/%,$1): $3/%: $2/%
+      $(patsubst %,$4/%,$2): $4/%: $3/%
 	rm -rf $$@
 	$$(call Cpio_DupOne_WithLinks,$$(<D),$$(<F),$$(@D))
+	$$(if $$(filter STRIP,$6 $$($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a ! -h $$@ ] ; then if echo $$@ | egrep '\.ko$$$$'>/dev/null ; then striparg=-g; fi; $$($1_TARGETFS_BUILD_ENV) $$($1_TARGETFS_TUPLE)-strip $$$$striparg $$@ -o $$@.stripped || echo WARNING CANT STRIP $$@; if [ -f $$@.stripped ] ; then mv -f $$@.stripped $$@ ; fi ; fi)
+	-file $$@
+	$$(if $$(filter STRIP,$6 $$($1_TARGETFS_DEFAULT_INSTALL_TAGS)), if [ -f $$@ -a ! -h $$@ ] ; then $$($1_TARGETFS_BUILD_ENV) $($1_TARGETFS_TUPLE)-readelf -d $$@ | grep NEEDED || echo WARNING CANT LDD $$@; fi)
 
-      $4 += $(patsubst %,$3/%,$1)
+      $5 += $(patsubst %,$4/%,$2)
 
     )
 
   endef
 
-  # $1 = list of relative paths
-  # $2 = source root
-  # $3 = destination root
-  # $4 = name of variable onto which targets are appended
-  # $5 = path filter
-  # $6 = path replacement
+  # $1 = targetfs name
+  # $2 = list of relative paths
+  # $3 = source root
+  # $4 = destination root
+  # $5 = name of variable onto which targets are appended
+  # $6 = path filter
+  # $7 = path replacement
+  # $8 = Install Tags
   define TargetFS_Install_Files_Translate
 
-    $(if $(filter $5/%,$1),
+    $(if $(filter $6/%,$2),
 
-      $(call TargetFS_Install_Files,$(patsubst $5/%,%,$(filter $5/%,$1)),$2/$5,$3/$6,$4)
+      $(call TargetFS_Install_Files,$1,$(patsubst $6/%,%,$(filter $6/%,$2)),$3/$6,$4/$7,$5,$8)
     )
 
   endef
@@ -175,6 +189,8 @@ ifndef Configure_TargetFS
 
   endef
 
+  TargetFS_Mkdir_Rule = $(foreach dirpath,$(patsubst %/,%,$(sort $1)),$(if $(DEFINED_TARGETFS_DIR_RULE_$(dirpath)),,$(eval $(dirpath): ; mkdir -p $$@) $(eval DEFINED_TARGETFS_DIR_RULE_$(dirpath):=1)))
+
   # $1 = unique targetfs name (eg. "my-group/my-rootfs")
   # $2 = build top (eg "/path/to/build-top")
   # $3 = path code (eg "mipsel-glibc/toolchain host/tools PATH")
@@ -194,6 +210,8 @@ ifndef Configure_TargetFS
 
     $1_TARGETFS_PREFIX     := $2/$1
 
+    $(call TargetFS_Mkdir_Rule,$2/$1)
+
     $1_TARGETFS_PATH_CODE  := $3
 
     $1_TARGETFS_WORK       := $(patsubst %/,%,$(dir $2/$1))/$(call TargetFS_Decode_Work,$3)
@@ -202,7 +220,13 @@ ifndef Configure_TargetFS
 
     $1_TARGETFS_BUILD_PATH := $(call TargetFS_Decode_Path,$3,$1,$2)
 
+    $1_TARGETFS_LD_LIBRARY_PATH := $(call cmerge,:,$(strip $(call TargetFS_Decode_Lib_Path,$3) $(call TargetFS_Search_Definition,$3,LD_LIBRARY_PATH)))
+
+    $1_TARGETFS_INCLUDES := $(call TargetFS_Decode_Includes,$3)
+    $1_TARGETFS_LIBRARIES := $(call TargetFS_Decode_Libraries,$3)
+
     $1_TARGETFS_BUILD_ENV  := PATH=$(call TargetFS_Decode_Path,$3,$1,$2)
+    $1_TARGETFS_BUILD_ENV  += LD_LIBRARY_PATH="$(call TargetFS_Decode_Lib_Path,$3)$(if $(call TargetFS_Search_Definition,$3,LD_LIBRARY_PATH),:$(call TargetFS_Search_Definition,$3,LD_LIBRARY_PATH))"
     $1_TARGETFS_BUILD_ENV  += PKG_CONFIG_PATH=$(patsubst %/,%,$(dir $2/$1))/pkgconfig/$(notdir $2/$1)
     $1_TARGETFS_BUILD_ENV  += CFLAGS="$(call TargetFS_Decode_Includes,$3)"
     $1_TARGETFS_BUILD_ENV  += LDFLAGS="$(call TargetFS_Decode_Libraries,$3)"
@@ -224,8 +248,6 @@ ifndef Configure_TargetFS
 
     $1_TargetFS_Tool_SENTINEL = $$(call TargetFS_Search_Definition,$3,$$1_INSTALLED_SENTINEL)
 
-    $$($1_TARGETFS_PREFIX): ; mkdir -p $$@
-
     $$($1_TARGETFS_PREFIX)/dev/loop0:   ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ b 7 0
     $$($1_TARGETFS_PREFIX)/dev/tty:     ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 5 0
     $$($1_TARGETFS_PREFIX)/dev/tty0:    ; mkdir -vp $$(@D); sudo $(MKNOD) -m 666 $$@ c 4 0
@@ -245,8 +267,8 @@ ifndef Configure_TargetFS
 
     # How to copy installable runtimes from the appropriate toolchain into our targetfs prefix
     $(foreach component,$(sort $(foreach targetfs,$3,$($(targetfs)_TARGETFS_INSTALLABLE_COMPONENT))),
-      $(call TargetFS_Install_Files_Translate,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS,$(call First_Toolchain_Tuple,$3,$5)/lib,lib)
-      $(call TargetFS_Install_Files,$(filter-out $(call First_Toolchain_Tuple,$3,$5)/lib/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE)),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS)
+      $(call TargetFS_Install_Files_Translate,$1,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS,$(call First_Toolchain_Tuple,$3,$5)/lib,lib,$4)
+      $(call TargetFS_Install_Files,$1,$(filter-out $(call First_Toolchain_Tuple,$3,$5)/lib/%,$(call TargetFS_Search_Definition,$3,$(component)_INSTALLABLE_FILE)),$($(call TargetFS_Search_Definer,$3,$(component)_INSTALLABLE_FILE)_TARGETFS_PREFIX),$2/$1,$1_$(component)_TARGETS,$4)
      )
 
     # Various aliases for subsets of components whose install rules are already defined
@@ -406,7 +428,7 @@ endef
 # $1 = unique targetfs name (eg. "my-rootfs")
 define TargetFS_Install_Overlay
 
-  $(foreach target,$($($1_TARGETFS_PREFIX)_OVERLAY_TARGETS),$(eval $(call Overlay_Install,$(target),$($1_TARGETFS_PREFIX))))
+  $(foreach target,$($($1_TARGETFS_PREFIX)_OVERLAY_TARGETS),$(if $(DEFINED_TARGETFS_DIR_RULE_$(target)),,$(eval $(call Overlay_Install,$(target),$($1_TARGETFS_PREFIX)))))
 
   $1_TARGETFS_TARGETS += $($($1_TARGETFS_PREFIX)_OVERLAY_TARGETS)
 
@@ -536,11 +558,15 @@ endef
 	touch $$(@D)/.building
 	$(if $5,$5,@echo no pre-configure steps)
 	$(if $6,cd $3 && env -i $($1_TARGETFS_BUILD_ENV) $($2_AUTORECONF_ENV) autoreconf -v --install --force,@echo skipping autoreconf)
+	$(if $(filter AUTOGEN=%,$8),cd $$(@D) && env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(patsubst AUTOGEN=%,%,$(filter AUTOGEN=%,$8)))
 	$(if $(filter NOCONFIGURE,$8),@echo skipping configure,cd $$(@D) && env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $3/configure $(if $7,$7,$$($3$4_CONFIGURE_OPTS)))
+	# if there are no MAKE_ARGS defined, do a basic make.
 	$(if $(filter $2_MAKE_ARGS%,$(.VARIABLES)),,
 	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D))
-	$(foreach arglist,$(sort $(filter $2_MAKE_ARGS%,$(.VARIABLES))),
-	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) $(call $(arglist),$1,$8,$9))
+	# found $(foreach var,$(sort $(filter $2_MAKE_ARGS%,$(.VARIABLES))),$(var)=$(call $(var),$1,$8,$9,$(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV))))
+	$(foreach arglist,$(sort $(filter $2_MAKE_ARGS%,$(.VARIABLES))),$(if $(call $(arglist),$1,$8,$9,$(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV))),
+	+env $(subst ENV=,,$(filter ENV=%,$8)) $(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)) $(MAKE) -C $$(@D) $(call $(arglist),$1,$8,$9,$(if $($2_BUILD_ENVIRONMENT),$(call $2_BUILD_ENVIRONMENT,$1,$8),$($1_TARGETFS_BUILD_ENV)))))
+	# done with MAKE_ARGS
 	$(call $2_POST_BUILD_STEPS,$1,$8,$3,$4,$9)
 	mv $$(@D)/.building $$@
 	touch $$@
@@ -571,7 +597,10 @@ endef
 
     $(if $($3$4/$5_STAGE_SENTINEL_TARGET),,
 
-      $(if $(filter UNIQUIFY,$9),
+      # UNIQUIFY is meant to prevent simultaneous installs of the same build from stepping on each others toes
+      # FINDUPBUG is meant to prevent gmp from failing to install everything because of UNIQUIFY
+
+      $(if $(and $(if $(filter FINDUPBUG,$8),,UNIQUIFYOK),$(filter UNIQUIFY,$8)),
 
       $3$4/$5: $3$4/.built
 	mkdir -p $$(@D)
@@ -652,7 +681,7 @@ endef
     $1_$2_STAGE         := $($1_TARGETFS_PREFIX)
 
     # How to install files if we're NOT staging:  install direct to this targetfs' prefix and create an .installed-$1-$5 sentinel unique to this targetfs
-    $(call TargetFS_Make_Install,$1,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3,$(if $(filter BUILDINSRC,$4),,-build),$(call cmerge,-,.installed $($1_TARGETFS_SAFENAME) $5),$($1_TARGETFS_PREFIX),$(call TargetFS_Package_Installables,$5,$2,$4) $($2_PKGCONFIG),$4,$5 UNIQUIFY)
+    $(call TargetFS_Make_Install,$1,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3,$(if $(filter BUILDINSRC,$4),,-build),$(call cmerge,-,.installed $($1_TARGETFS_SAFENAME) $5),$($1_TARGETFS_PREFIX),$(call TargetFS_Package_Installables,$5,$2,$4) $($2_PKGCONFIG),$4 UNIQUIFY,$5)
 
     # Add to the lists of targets JUST the sentinel file
     $1_TARGETFS_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3$(if $(filter BUILDINSRC,$4),,-build)/$(call cmerge,-,.installed $($1_TARGETFS_SAFENAME) $5)
@@ -661,17 +690,26 @@ endef
     $1_$2:                 $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3$(if $(filter BUILDINSRC,$4),,-build)/$(call cmerge,-,.installed $($1_TARGETFS_SAFENAME) $5)
 
     # Add to the lists of targets the pkgconfig file
-    $1_TARGETFS_TARGETS += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
-    $1_$2_TARGETS       += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_TARGETFS_TARGETS += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_TARGETFS_TARGETS += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
-    $1_$2:                 $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_$2_TARGETS       += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2_TARGETS       += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
+
+    $1_$2:                 $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2:                 $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
     # For doing software development based on this package, we need to install into the targetfs prefix, and we need the .pc file.
     $1_$2_DEV_TARGETS   += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3$(if $(filter BUILDINSRC,$4),,-build)/$(call cmerge,-,.installed $($1_TARGETFS_SAFENAME) $5)
-    $1_$2_DEV_TARGETS   += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_$2_DEV_TARGETS   += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2_DEV_TARGETS   += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
     # The packageconfig file comes from the target prefix.  Make sure references to prefix in that file point to the absolute install prefix for dependent builds.
-    $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG)): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_PREFIX)/lib/pkgconfig/%
+    $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG))): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_PREFIX)/lib/pkgconfig/%
+	mkdir -p $$(@D)
+	perl -pe 's,prefix=/?$$$$,prefix=$($1_TARGETFS_PREFIX),' $$< > $$@
+
+    $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG))): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_PREFIX)/share/pkgconfig/%
 	mkdir -p $$(@D)
 	perl -pe 's,prefix=/?$$$$,prefix=$($1_TARGETFS_PREFIX),' $$< > $$@
   endef
@@ -705,17 +743,27 @@ endef
     check-runtime-dependencies: $(patsubst %,$($1_TARGETFS_PREFIX)/%-check-runtime-dependencies,$(call TargetFS_Package_Installables,$5,$2,$4))
 
     # Add to the lists of targets the pkgconfig file
-    $1_TARGETFS_TARGETS += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
-    $1_$2_TARGETS       += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_TARGETFS_TARGETS += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_TARGETFS_TARGETS += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
-    $1_$2:                 $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_$2_TARGETS       += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2_TARGETS       += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
+
+    $1_$2:                 $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2:                 $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
     # For doing software development based on this package, we don't need to install into the targetfs prefix.  We only need the .staged file and the .pc file.
     $1_$2_DEV_TARGETS   += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3$(if $(filter BUILDINSRC,$4),,-build)/.staged
-    $1_$2_DEV_TARGETS   += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG))
+    $1_$2_DEV_TARGETS   += $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG)))
+    $1_$2_DEV_TARGETS   += $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG)))
 
     # The packageconfig file comes from the staging directory.  Make sure references to prefix in that file point back to the staging directory for dependent builds.
-    $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$($2_PKGCONFIG)): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage/lib/pkgconfig/%
+    $(patsubst lib/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter lib/pkgconfig/%,$($2_PKGCONFIG))): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage/lib/pkgconfig/%
+	mkdir -p $$(@D)
+	perl -pe 's,prefix=/?$$$$,prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage,' $$< > $$@
+
+    # The packageconfig file comes from the staging directory.  Make sure references to prefix in that file point back to the staging directory for dependent builds.
+    $(patsubst share/pkgconfig/%,$($1_TARGETFS_PKGCONFIG)/%,$(filter share/pkgconfig/%,$($2_PKGCONFIG))): $($1_TARGETFS_PKGCONFIG)/%: $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage/share/pkgconfig/%
 	mkdir -p $$(@D)
 	perl -pe 's,prefix=/?$$$$,prefix=$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage,' $$< > $$@
 
@@ -730,12 +778,14 @@ endef
   # $7 = optional environment
   define TargetFS_Install_From_Stage
 
-    $(patsubst %,$4/%,$6): $4/%: $3/%
+    $(call TargetFS_Mkdir_Rule,$(sort $(dir $(patsubst %,$4/%,$6))))
+
+    $(filter-out $(sort $(dir $(patsubst %,$4/%,$6))),$(patsubst %,$4/%,$6)): $4/%: $3/%
 	@echo CrossPlex installing $$(<F) from $$(<D) to $$(@D)
 	$$(call Cpio_DupOne,$$(<D),$$(<F),$$(@D))
 	$(if $(filter STRIP,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then if echo $$@ | egrep '\.ko$$$$'>/dev/null ; then striparg=-g; fi; $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-strip $$$$striparg $$@ -o $$@.stripped || echo WARNING CANT STRIP $$@; if [ -f $$@.stripped ] ; then mv -f $$@.stripped $$@ ; fi ; fi)
 	-file $$@
-	$(if $(filter LDD,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) ldd $$@ || echo WARNING CANT LDD $$@; fi)
+	$(if $(filter LDD,$5 $($1_TARGETFS_DEFAULT_INSTALL_TAGS)),if [ -f $$@ -a ! -h $$@ ] ; then $(if $7,$7,$($1_TARGETFS_BUILD_ENV)) $($1_TARGETFS_TUPLE)-readelf -d $$@ | grep NEEDED || echo WARNING CANT LDD $$@; fi)
 
   endef
 
@@ -758,7 +808,7 @@ endef
 
     $(if $(filter NOSTAGE,$4),$(call TargetFS_NoStage,$1,$2,$3,$4,$5,$6),$(call TargetFS_Stage,$1,$2,$3,$4,$5,$6))
 
-    $$($1_$2_TARGETS): $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
+    $$($1_$2_TARGETS): | $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
 
     $1_$2: $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
 
@@ -775,11 +825,13 @@ endef
 
     $1_$2_TargetFS_Install_Autoconf := 1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5
 
-    $(foreach module,$(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES),$(if $(filter $(module)%,$2),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(call TargetFS_Install_Autoconf_One,$1,$(module),$(filter $(module)-%,$2),$3 $($(module)_FORCE_BUILD_TAGS),$4,$5))))
+    $(foreach module_ver,$2,\
+       $(if $(call TargetFS_Autoconf_Module,$(module_ver)),\
+            $(call TargetFS_Install_Autoconf_One,$1,$(call TargetFS_Autoconf_Module,$(module_ver)),$(module_ver),$3 $($(call TargetFS_Autoconf_Module,$(module_ver))_FORCE_BUILD_TAGS),$4 $($(call TargetFS_Autoconf_Module,$(module_ver))_FORCE_INSTALL_TAGS),$5)))
 
   endef
 
-  TargetFS_Autoconf_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
+  TargetFS_Autoconf_Module = $(sort $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES)),$(if $(filter $(module)-%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))$(if $(filter $(module)_%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module))))))
 
   TargetFS_Make_Module = $(strip $(foreach module,$(strip $(CONFIGURE_TOOLS_KNOWN_MAKE_MODULES)),$(if $(filter $(module)%,$1),$(if $(filter $(module)_LICENSE,$(.VARIABLES)),$(module)))))
 
@@ -823,7 +875,7 @@ endef
 
     $(if $(filter NOSTAGE,$4),$(call TargetFS_NoStage,$1,$2,$3,$4 NOCONFIGURE BUILDINSRC,$5,$6),$(call TargetFS_Stage,$1,$2,$3,$4 NOCONFIGURE BUILDINSRC,$5,$6))
 
-    $$($1_$2_TARGETS): $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
+    $$($1_$2_TARGETS): | $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
 
     $1_$2: $(patsubst %,$$($1_%_TARGETS),$($2_RUNTIME_DEPENDENCIES))
 
@@ -859,7 +911,7 @@ endef
     # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
     $(if $2,,$(error must specify software version for linux_headers))
 
-    $(call Linux_Rules,$1-linux-headers,$2,$($1_TARGETFS_WORK),$(call TagCond,TARGET=%,%,$($1_TARGETFS_TUPLE),$3),,,,$($1_TARGETFS_BUILD_PATH),$5)
+    $(call Linux_Rules,$1-linux-headers,$2,$($1_TARGETFS_WORK),$(call TagCond,TARGET=%,%,$($1_TARGETFS_TUPLE),$3),,,,PATH=$($1_TARGETFS_BUILD_PATH) LD_LIBRARY_PATH=$($1_TARGETFS_LD_LIBRARY_PATH),$5)
 
     # targets defined in Linux_Rules
     $($1_TARGETFS_WORK)/$1-linux-headers/.headers-installed-$($1_TARGETFS_SAFENAME): $($1_TARGETFS_WORK)/$2-sanitized-headers/.installed
@@ -886,7 +938,7 @@ endef
     # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
     $(if $2,,$(error must specify software version for linux_headers))
 
-    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1),$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),$(call Targetfs_Prefix_Of,$1),,$(call Complete_Targetfs_Target_List,$1) $(sort $(dir $(call Complete_Targetfs_Target_List,$1))),PATH=$($1_TARGETFS_BUILD_PATH) LD_LIBRARY_PATH=$($1_TARGETFS_LD_LIBRARY_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
     $1_initramfs-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux.noinitramfs
 
@@ -912,7 +964,7 @@ endef
     # TargetFS_Install_Kernel_Headers (1=$1, 2=$2, 3=$3, 4=$4, 5=$5)
     $(if $2,,$(error must specify software version for linux_headers))
 
-    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),,,,$($1_TARGETFS_BUILD_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
+    $(call Linux_Rules,$1-linux,$2,$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1),$($1_TARGETFS_TUPLE),,,,PATH=$($1_TARGETFS_BUILD_PATH) LD_LIBRARY_PATH=$($1_TARGETFS_LD_LIBRARY_PATH),$5,$($1_TARGETFS_TOOLCHAIN_TARGETS))
 
     $1_nfsroot-linux-prepare_DEV_TARGETS += $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$2 $1)/$2-build/vmlinux
 

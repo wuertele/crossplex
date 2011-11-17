@@ -151,15 +151,15 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
 
   # $1 = list of build tags.  We're looking for the value of THREAD=
   # $2 = list of sources
-  GCC_SRC_Plugins = SRC_PLUGIN=$(filter mpfr-%,$1) SRC_PLUGIN=$(filter gmp-%,$1) SRC_PLUGIN=$(filter mpc-%,$1)
+  GCC_SRC_Plugins_Uclibc = SRC_PLUGIN=$(filter mpfr-%,$1) SRC_PLUGIN=$(filter gmp-%,$1) SRC_PLUGIN=$(filter mpc-%,$1)
 
-  INSTALL_KERNEL_HEADERS    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
-  INSTALL_BINUTILS          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
-  INSTALL_UCLIBC_HEADERS    = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-headers-sysroot MAKEARGS=headers ENV=-i $5 ,,$6)
-  INSTALL_GCC_CORE_STATIC   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED ALLTARGETLIBGCC SYSROOT=$1/gcc-core-static-sysroot MAKEARGS=stage1 $5 $(call GCC_SRC_Plugins,$3),,$6)
-  INSTALL_UCLIBC_FINAL      = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-final-sysroot ENV=-i MAKEARGS=final $5 ,,$6)
-  INSTALL_GCC_FINAL         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5 $(call GCC_SRC_Plugins,$3),,$6)
-  INSTALL_GDB               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
+  INSTALL_KERNEL_HEADERS_Uclibc    = $(call TargetFS_Install_Kernel_Headers,$1/$2,$(filter linux-%,$3),NOSTAGE TARGET=$4 $5,,$6)
+  INSTALL_BINUTILS_Uclibc          = $(call TargetFS_Install_Autoconf,$1/$2,$(filter binutils-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
+  INSTALL_UCLIBC_HEADERS_Uclibc    = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-headers-sysroot MAKEARGS=headers ENV=-i $5 ,,$6)
+  INSTALL_GCC_CORE_STATIC_Uclibc   = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 NOSHARED ALLTARGETLIBGCC SYSROOT=$1/gcc-core-static-sysroot MAKEARGS=stage1 $5 $(call GCC_SRC_Plugins_Uclibc,$3),,$6)
+  INSTALL_UCLIBC_FINAL_Uclibc      = $(call TargetFS_Install_Make,$1/$2,$(filter uClibc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/uclibc-final-sysroot ENV=-i MAKEARGS=final $5 ,,$6)
+  INSTALL_GCC_FINAL_Uclibc         = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gcc-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain MAKEARGS=stage3 $5 $(call GCC_SRC_Plugins_Uclibc,$3),,$6)
+  INSTALL_GDB_Uclibc               = $(call TargetFS_Install_Autoconf,$1/$2,$(filter gdb-%,$3),NOSTAGE TARGET=$4 SYSROOT=$1/toolchain $5,,$6)
 
   # $1 = build top
   # $2 = toolchain (targetfs) name
@@ -178,26 +178,26 @@ ifndef UCLIBC_TOOLCHAIN_MAKE_LOADED
     $(eval $(call Configure_TargetFS,$2/toolchain,$1,$5,,$3))
 
     # Uclibc Headers build depends on binutils and kernel headers
-    $(eval $(call INSTALL_BINUTILS,$2,uclibc-headers-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,uclibc-headers-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Uclibc,$2,uclibc-headers-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Uclibc,$2,uclibc-headers-sysroot,$4,$3,$6,$7))
 
     # GCC Core (no shared libs) build depends on kernel headers, binutils, and uclibc headers
-    $(eval $(call INSTALL_BINUTILS,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_UCLIBC_HEADERS,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Uclibc,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Uclibc,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_UCLIBC_HEADERS_Uclibc,$2,gcc-core-static-sysroot,$4,$3,$6,$7))
 
     # Uclibc final build depends on binutils, kernel headers, uclibc headers, and GCC Core (no shared libs)
-    $(eval $(call INSTALL_BINUTILS,$2,uclibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,uclibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_UCLIBC_HEADERS,$2,uclibc-final-sysroot,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_CORE_STATIC,$2,uclibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Uclibc,$2,uclibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Uclibc,$2,uclibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_UCLIBC_HEADERS_Uclibc,$2,uclibc-final-sysroot,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_CORE_STATIC_Uclibc,$2,uclibc-final-sysroot,$4,$3,$6,$7))
 
     # Toolchain:  depends on binutils, uclibc final, gcc final, and gdb
-    $(eval $(call INSTALL_BINUTILS,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_KERNEL_HEADERS,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_UCLIBC_FINAL,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GCC_FINAL,$2,toolchain,$4,$3,$6,$7))
-    $(eval $(call INSTALL_GDB,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_BINUTILS_Uclibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_KERNEL_HEADERS_Uclibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_UCLIBC_FINAL_Uclibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GCC_FINAL_Uclibc,$2,toolchain,$4,$3,$6,$7))
+    $(eval $(call INSTALL_GDB_Uclibc,$2,toolchain,$4,$3,$6,$7))
 
     $2/toolchain_RUNTIMES  += uclibc
     $2/toolchain_TOOLCHAIN += uclibc

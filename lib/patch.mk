@@ -38,6 +38,8 @@ clean: unpack-clean
 # $6 = archive file list command
 define General_Unpack_Rule
 
+  # General_Unpack_Rule (1=$1, 2=$2, 3=$3, 4=$4, 5=$5, 6=$6)
+
   $2/%/.unpacked: $3/%$4
 	rm -rf $$(@D) $$(@D)-unpacking
 	mkdir -p $$(@D)-unpacking
@@ -56,6 +58,8 @@ endef
 define Unpack_Rules
 
   # Unpack_Rules (1=$1, 2=$2, 3=$3)
+
+  $(if $(and $($1_ARCHIVE_POSTFIX),$($1_UNARCHIVE_SHELL_COMMAND)),$(call General_Unpack_Rule,$1,$2,$3,$($1_ARCHIVE_POSTFIX),$($1_UNARCHIVE_SHELL_COMMAND)))
 
   $(call General_Unpack_Rule,$1,$2,$3,.tar.xz,tar xvJf,tar tJf)
   $(call General_Unpack_Rule,$1,$2,$3,.tar.gz,tar xvzf,tar tzf)
@@ -276,6 +280,8 @@ endef
 # $6 = where are patches found (eg /vobs/stb_common/bcm_kernel_impl/patches/GPL)
 # $7 = extra patch subdirs
 define Patchify_Rules
+
+    # Patchify_Rules (1=$1 , 2=$2 , 3=$3 , 4=$4 , 5=$5 , 6=$6 , 7=$7)
 
     $(if $($(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_$6_$7_Unique_Patchify_Args)),,
       $(eval $(subst $(__crossplex_space),_,$1_$2_$3_$4_$5_$6_$7_Unique_Patchify_Args) := crossplexwashere)

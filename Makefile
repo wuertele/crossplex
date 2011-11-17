@@ -13,7 +13,7 @@ endif
 
 FORCE ?= 0
 
-VERSION := crossplex-0.11.4
+VERSION := crossplex-0.12.0
 
 DESTDIR ?= /usr/local
 
@@ -149,7 +149,7 @@ define Test_HostBuild
   test-host-scratchbuild-$1:
 	rm -rf $(TEST_PATH)
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
+	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty 
 
   test-host-scratchbuild: test-host-scratchbuild-$1
 
@@ -157,7 +157,7 @@ define Test_HostBuild
 
   test-host-rebuild-$1:
 	$(MAKE) install DESTDIR=$(TEST_PATH)
-	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty HTTP_PROXY=http://wwwgate0.mot.com:1080/ FTP_PROXY=http://wwwgate0.mot.com:1080/ 
+	$(MAKE) -C examples $1 CROSSPLEX_BUILD_INSTALL=$(TEST_PATH) BUILD_TOP=$(TEST_PATH)/build THIRD_PARTY=$(TEST_PATH)/thirdparty 
 
   test-host-rebuild: test-host-rebuild-$1
 

@@ -123,6 +123,7 @@ ifndef Magic_Tarball_Kit
 
   endef
 
+
   # $1 = unique kit name (eg. "my-super-duper-kit")
   # $2 = host-tools targetfs unique name (eg. "host-tools")
   # $3 = kernel build unique name (eg. "davix-vmwarek")
@@ -139,15 +140,16 @@ ifndef Magic_Tarball_Kit
 
     $4/$1/$1-staging/isolinux/isolinux.cfg:
 	mkdir -p $$(@D)
-	touch $$@
+	echo "LABEL linux" >> $$@
+	echo "   kernel linux" >> $$@
 
-    $4/$1/$1-staging/isolinux/LINUX: $($3_KERNEL_BZIMAGE_FILENAME)
+    $4/$1/$1-staging/isolinux/linux: $(or $($3_KERNEL_BZIMAGE_FILENAME),$($3_LINUX_BZIMAGE_FILENAME))
 	mkdir -p $$(@D)
-	cp -a $$< $$@
+	cp -L $$< $$@
 
-    $4/$1/$1.iso: $($2_TARGETFS_PREFIX)/bin/mkisofs $4/$1/$1-staging/isolinux/LINUX $4/$1/$1-staging/isolinux/isolinux.cfg $4/$1/$1-staging/isolinux/isolinux.bin
+    $4/$1/$1.iso: $($2_TARGETFS_PREFIX)/bin/mkisofs $4/$1/$1-staging/isolinux/linux $4/$1/$1-staging/isolinux/isolinux.cfg $4/$1/$1-staging/isolinux/isolinux.bin
 	mkdir -p $$(@D)
-	$($2_TARGETFS_PREFIX)/bin/mkisofs -o $$@ -b isolinux/isolinux.bin -no-emul-boot -boot-info-table $4/$1/$1-staging
+	$($2_TARGETFS_PREFIX)/bin/mkisofs -posix-L -o $$@ -b isolinux/isolinux.bin -no-emul-boot -boot-info-table $4/$1/$1-staging
 
     $1_ISO_FILENAME := $4/$1/$1.iso
 

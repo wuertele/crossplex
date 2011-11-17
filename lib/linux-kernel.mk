@@ -24,9 +24,15 @@ ifndef Configure_Kernel
 
 #  LINUX_ARCHMAP_linux-2.6.18_i386 := i686-%
   LINUX_ARCHMAP_x86    := i686-%
+  LINUX_ARCHMAP_x86_64 := x86_64-%
   LINUX_ARCHMAP_mips   := mips%
 
   Linux_Arch = $(firstword $(foreach arch, $(if $2,$(patsubst LINUX_ARCHMAP_$2_%,%,$(filter LINUX_ARCHMAP_$2%,$(.VARIABLES)))) $(patsubst LINUX_ARCHMAP_%,%,$(filter LINUX_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(LINUX_ARCHMAP_$2_$(arch)),$1),$(arch)) $(if $(filter $(LINUX_ARCHMAP_$(arch)),$1),$(arch))))
+
+  Linux_DumbArch = $(if $(filter i486-%,$1),x86)
+  Linux_DumbArch += $(if $(filter i686-%,$1),x86)
+  Linux_DumbArch += $(if $(filter mips%,$1),mips)
+  Linux_DumbArch += $(if $(filter arm%,$1),arm)
 
   # $1 = unique kernel name (eg. "davix/kernels/linux")
   # $2 = linux kernel version (eg "linux-2.6.24")
@@ -181,7 +187,7 @@ ifndef Configure_Kernel
   # $5 = path(s) to (optional) top-level directories for initramfs packaging
   # $6 = path(s) to (optional) top-level files containing listings for initramfs packaging
   # $7 = dependencies to satisfy before trying to pack up $5 or $6
-  # $8 = kernel build PATH environment variable
+  # $8 = kernel build environment variables
   # $9 = list of patch tags
   # $(10) = kernel build toolchain dependency
   define Linux_Rules
@@ -196,8 +202,10 @@ ifndef Configure_Kernel
     $1_LINUX_SRC_DIR := $3/$2
     $1_LINUX_BUILD_DIR := $3/$2-build
 
-    $1_LINUX_MAKE_OPTS := $(if $(filter i686-%,$4),ARCH=x86)
+    $1_LINUX_MAKE_OPTS := $(if $(filter i486-%,$4),ARCH=x86)
+    $1_LINUX_MAKE_OPTS += $(if $(filter i686-%,$4),ARCH=x86)
     $1_LINUX_MAKE_OPTS += $(if $(filter mips%,$4),ARCH=mips)
+    $1_LINUX_MAKE_OPTS += $(if $(filter arm%,$4),ARCH=arm)
 
 ifneq ($4,$(HOST_TUPLE))
     $1_LINUX_MAKE_OPTS += $(if $4,CROSS_COMPILE=$4-)
@@ -232,22 +240,22 @@ endif
 	mkdir -p $$(@D)
 	perl -e 'while (<>) { if (/([^=]+)=(.+)/) { $$$$a{$$$$1} = $$$$2; delete $$$$b{$$$$1}} elsif (/\# (\S+) is not set/) {$$$$b{$$$$1}++; delete $$$$a{$$$$1}} } print join ("\n", map { "$$$$_=$$$$a{$$$$_}" } keys %a), "\n"; print join ("\n", map { "# $$$$_ is not set" } keys %b), "\n";' $$(DEFAULT_CONFIGS) $$(MERGE_CONFIGS) > $$@
 	# For every variable needed by kernel config and not defined in the .config-default and .config-merge% files, use the kernel's default
-	+ yes "" | PATH=$8 $(MAKE) oldconfig V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ yes "" | env -i $8 $(MAKE) oldconfig V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 
       $3/$2-sanitized-headers/.installed: $$($3/$2_SOURCE_PREPARED)
 	  mkdir -p $$(@D)
 	  mkdir -p $3/$2-build
 	  touch $$(@D)/.installing
-  #	+ PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
-	  + $(MAKE) headers_install PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr 
+  #	+ env -i $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) include/asm include/linux/version.h
+	  + env -i $8 $(MAKE) headers_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr 
 	  mv $$(@D)/.installing $$@
 
 
     $3/$2-dirty-headers/.installed: $3/$2-build/.config
 	  mkdir -p $$(@D)
 	  touch $$(@D)/.installing
-  #	+ PATH=$8 $(MAKE) include/asm include/linux/version.h V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) 
-	  + $(MAKE) headers_install PATH=$8:$(build-tools_TARGETFS_PREFIX)/bin V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr
+  #	+ env -i $8 $(MAKE) include/asm include/linux/version.h V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) 
+	  + env -i $8 $(MAKE) headers_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_HDR_PATH=$$(@D)/usr
 	  # ignore errors on the following two lines because they only work for linux-2.6.31
 	  -cp -r --update $3/$2/arch/mips/include/asm/* $$(@D)/include/asm
 	  cp -r --update $3/$2-build/include/linux/* $$(@D)/include/linux
@@ -259,33 +267,34 @@ endif
 	  mv $$(@D)/.installing $$@
 
     $3/$2-build/vmlinux.noinitramfs: $3/$2-build/.config $3/$2-build/scripts/kallsyms $(10)
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$(patsubst CONFIG_INITRAMFS_SOURCE="%",CONFIG_INITRAMFS_SOURCE="",$$($1_LINUX_MAKE_OPTS))
+	+ env -i $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$(patsubst CONFIG_INITRAMFS_SOURCE="%",CONFIG_INITRAMFS_SOURCE="",$$($1_LINUX_MAKE_OPTS))
 	touch $$@
 
     $3/$2-build/vmlinux: $3/$2-build/.config $3/$2-build/scripts/kallsyms $6 $7 $(10)
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
-	+ PATH=$8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
+	+ env -i $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD="" modules
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
 	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
 	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
-	# PATH=$8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
-	+ PATH=$8 $(MAKE) modules_install V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
+	# env -i $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true modules_install;
+	+ env -i $8 $(MAKE) modules_install V=1 O=$$(@D) -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
 
-     $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage: $3/$2-build/.config $6 $7 $(10)
-	+ yes "" | PATH=$8 $(MAKE) oldconfig V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
-	+ PATH=$8 $(MAKE) bzImage V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
-	+ PATH=$8 $(MAKE) modules V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD=""
+     $3/$2-build/arch/$(strip $(call Linux_DumbArch,$4))/boot/bzImage $3/$2-build/arch/$(strip $(call Linux_DumbArch,$4))/boot/Image: $3/$2-build/.config $6 $7 $(10)
+	+ yes "" | env -i $8 $(MAKE) oldconfig V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) bzImage V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) modules V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) RELEASE_BUILD=""
 	# The next line breaks uniquification because any version will install to a single path $(INSTALL_ROOT).
 	# This would be written better as INSTALL_MOD_PATH=$3/$2-stage so that different kernels don't step on each others' results.
 	# Unfortunately there is no easy way to specify copying from $3/$2-stage to the target without a recursive copy, and that does not maintain dependency relationships.
-	# PATH=$8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true;
-	+ PATH=$8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
+	# env -i $8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$(INSTALL_ROOT) DEPMOD=true;
+	+ env -i $8 $(MAKE) modules_install V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS) INSTALL_MOD_PATH=$3/$2-stage DEPMOD=true;
 
     $3/$2-build/vmlinuz: $3/$2-build/vmlinux
 	gzip -3fc $$< > $$@
 
     $3/$2-build/scripts/kallsyms: $3/$2-build/.config $(10)
-	+ PATH=$8 $(MAKE) prepare scripts V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) prepare scripts V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 	touch $$@
 
       $3/$2-build/.config_RULE_DEFINED := crossplexwashere
@@ -299,7 +308,7 @@ endif
     linux-config: $3/$2-build/.config
 
     $1-linux-mrproper: $3/$2-build/.config
-	+ PATH=$8 $(MAKE) mrproper V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
+	+ env -i $8 $(MAKE) mrproper V=1 O=$3/$2-build -C $3/$2 $$($1_LINUX_MAKE_OPTS)
 
     linux-mrproper: $1-linux-mrproper
 
@@ -331,7 +340,9 @@ endif
 
     linux-compressed-image: $3/$2-build/vmlinuz
 
-    $1_LINUX_BZIMAGE_FILENAME    := $3/$2-build/arch/$(call Linux_Arch,$4,$2)/boot/bzImage
+    $1_LINUX_BZIMAGE_FILENAME    := $3/$2-build/arch/$(strip $(call Linux_DumbArch,$4))/boot/bzImage
+
+    $1_LINUX_IMAGE_FILENAME    := $3/$2-build/arch/$(strip $(call Linux_DumbArch,$4))/boot/Image
 
     $1_LINUX_COMPRESSED_FILENAME := $3/$2-build/vmlinuz
 

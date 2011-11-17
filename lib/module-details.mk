@@ -40,6 +40,7 @@ ifndef MODULE_DETAILS_LOADED
   binutils_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)),--target=$($1_TARGETFS_TUPLE))
   binutils_CONFIGURE_ARGS += --disable-nls
   binutils_CONFIGURE_ARGS += --disable-werror
+  binutils_CONFIGURE_ARGS += --enable-poison-system-directories
   binutils_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
 
   binutils_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR=ar
@@ -77,15 +78,22 @@ ifndef MODULE_DETAILS_LOADED
 
   gcc_LICENSE := GPL
 
+#  gcc_FORCE_BUILD_TAGS += AUTORECONF
+#  gcc_FORCE_BUILD_TAGS += AUTOGEN="autogen Makefile.def"
+
   gcc_SYSROOT_DEPENDENCIES = binutils linux_headers
 
-  gcc_enable_c_and_cplusplus := --enable-languages=c,c++
+  gcc_BUILD_DEPENDENCIES = autoconf libtool automake autogen
 
-  GCC_ARCHMAP_mips1  := mipsel-%-linux-uclibc
+  gcc_enable_c_and_cplusplus := --enable-languages=c,c++
+#  stage2_withspecs := '--with-specs=%{save-temps: -fverbose-asm} %{funwind-tables|fno-unwind-tables|mabi=*|ffreestanding|nostdlib:;:-funwind-tables} -D__CS_SOURCERYGXX_MAJ__=2011 -D__CS_SOURCERYGXX_MIN__=3 -D__CS_SOURCERYGXX_REV__=41 %{O2:%{!fno-remove-local-statics: -fremove-local-statics}} %{O*:%{O|O0|O1|O2|Os:;:%{!fno-remove-local-statics: -fremove-local-statics}}}'
+
+  GCC_ARCHMAP_mips1    := mipsel-%-linux-uclibc
+  GCC_ARCHMAP_armv5te  := arm-%
 
   Gcc_Arch = $(sort $(foreach arch,$(patsubst GCC_ARCHMAP_%,%,$(filter GCC_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(GCC_ARCHMAP_$(arch)),$1),$(arch))))
 
-  gcc_BUILD_DEPENDENCIES += gmp mpfr mpc
+  gcc_BUILD_DEPENDENCIES += gmp mpfr mpc ppl cloog-parma libelf
 
   gcc_CONFIGURE_ARGS  = --prefix=/
   gcc_CONFIGURE_ARGS += --build=$(HOST_TUPLE) --host=$(HOST_TUPLE)
@@ -93,60 +101,78 @@ ifndef MODULE_DETAILS_LOADED
   gcc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--target=$(subst TARGET=,,$(filter TARGET=%,$4)),--target=$($1_TARGETFS_TUPLE))
   gcc_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
   gcc_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-local-prefix=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))   # remove /usr/local/include from gcc's include search path (http://gcc.gnu.org/PR10532)
-  gcc_CONFIGURE_ARGS += $(call TagCond,MAKEARGS=stage3,$(gcc_enable_c_and_cplusplus),--enable-languages=c,$4)
-  gcc_CONFIGURE_ARGS += $(call TagCond,MAKEARGS=stage3,,--without-headers,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--disable-threads,$4)	# BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec says: --enable-threads
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-threads=no,$4)	# crosstool.sh's way of syaing "--disable-threads"
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--with-newlib,$4)	# hack used by crosstool.sh to convince gcc-core that it doesn't need real glibc headers
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--with-gnu-as,$4)	# codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--with-gnu-ld,$4)	# codesourcery
+  gcc_CONFIGURE_ARGS += --enable-lto # codesourcery
+  gcc_CONFIGURE_ARGS += --disable-libssp # codesourcery
+  gcc_CONFIGURE_ARGS += --disable-libstdcxx-pch	# codesourcery
+  gcc_CONFIGURE_ARGS += --enable-extra-sgxxlite-multilibs # codesourcery
+  gcc_CONFIGURE_ARGS += --disable-libgomp # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--disable-decimal-float,$4)	# codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--disable-libffi,$4)	# foreign function interface library, needed for gcj
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--disable-libffi,$4)	# foreign function interface library, needed for gcj
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--disable-libquadmath,$4)	# codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--disable-libquadmath,$4)	# codesourcery
+  gcc_CONFIGURE_ARGS += --enable-poison-system-directories # codesourcery
+  gcc_CONFIGURE_ARGS += --disable-libmudflap # codesourcery
+  gcc_CONFIGURE_ARGS += --with-host-libstdcxx='-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm' # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-languages,$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-languages=c,$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,$(gcc_enable_c_and_cplusplus),$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,$(gcc_enable_c_and_cplusplus),$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,$(gcc_enable_c_and_cplusplus),$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--without-headers,$4) # codesourcery
+# codesourcery gcc_CONFIGURE_ARGS += $(call TagCond,MAKEARGS=stage3,,--without-headers,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--without-newlib,$4)    # build stage3 libgcc WITH C libraries. 
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--enable-threads,$4) # codesourcery
+# codesourcery gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--enable-threads=posix,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-threads=posix,$4)
-  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--disable-libgomp,$4)
-  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--disable-libssp,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-c99,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-long-long,$4)
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--with-gnu-as,$4) # codesourcery
+  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,--with-gnu-ld,$4) # codesourcery
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--with-gnu-as,$4)
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--with-gnu-ld,$4)
   gcc_CONFIGURE_ARGS += --disable-multilib
+#  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage2,$(stage2_withspecs),$4)
   gcc_CONFIGURE_ARGS += --disable-nls			# no human will be reading this tools error codes
   gcc_CONFIGURE_ARGS += --enable-symvers=gnu		# from crosstool.sh
   gcc_CONFIGURE_ARGS += --enable-__cxa_atexit           # from crosstool.sh.  (cross-lfs.org says that this allows use of __cxa_atexit, rather than atexit, to register C++ destructors for local statics and global objects and is essential for fully standards-compliant handling of destructors. It also affects the C++ ABI and therefore results in C++ shared libraries and C++ programs that are interoperable with other Linux distributions.)
-  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-target-optspace,$4)	# from BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec
+#  gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage1,--enable-target-optspace,$4)	# from BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec
   gcc_CONFIGURE_ARGS += $(call TagSubst,MAKEARGS=stage3,--enable-target-optspace,$4)	# from BROADCOM crosstools_hf-linux-2.6.18.0-uclibc-0.9.29-nptl-20070423-4.2-4ts.spec
   gcc_CONFIGURE_ARGS += $(if $(filter NOSHARED,$4),--disable-shared,--enable-shared)
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,gmp),--with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp))
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpfr),--with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr))
   gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpc),--with-mpc=$(call $1_TargetFS_Tool_DESTDIR,mpc))
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,ppl),--with-ppl=$(call $1_TargetFS_Tool_DESTDIR,ppl))
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,cloog-parma),--with-cloog=$(call $1_TargetFS_Tool_DESTDIR,cloog-parma))
+  gcc_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,libelf),--with-libelf=$(call $1_TargetFS_Tool_DESTDIR,libelf))
 
-  gcc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
-  gcc_BUILD_ENVIRONMENT += $$(if $$(call $1_TargetFS_Tool_DESTDIR,gmp),CFLAGS="-I$$(call $1_TargetFS_Tool_DESTDIR,gmp)")
+  gcc_BUILD_ENVIRONMENT  = PATH=$(call cmerge,:,$(strip $(call TargetFS_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_BUILD_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_BUILD_PATH)))
+  gcc_BUILD_ENVIRONMENT += LD_LIBRARY_PATH=$(call cmerge,:,$(strip $(call TargetFS_Lib_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_LD_LIBRARY_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_LD_LIBRARY_PATH)))
+  gcc_BUILD_ENVIRONMENT += $(if $(filter SYSROOT=%,$2),LDFLAGS_FOR_TARGET=--sysroot=$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2))))
+  gcc_BUILD_ENVIRONMENT += $(if $(filter SYSROOT=%,$2),CPPFLAGS_FOR_TARGET=--sysroot=$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2))))
+#  gcc_BUILD_ENVIRONMENT += $$(if $$(call $1_TargetFS_Tool_DESTDIR,gmp),CFLAGS="-I$$(call $1_TargetFS_Tool_DESTDIR,gmp)")
 
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 := configure-gcc 
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += configure-libcpp
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += configure-build-libiberty
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += configure-libdecnumber
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += all-libcpp
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += all-build-libiberty
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC4 += all-libdecnumber
+  CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 := configure-gcc configure-build-libiberty all-build-libiberty all-libiberty 
 
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 := configure-gcc
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += configure-build-libiberty
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-build-libiberty 
-  CROSS_GCC_STAGE2_MAKE_OPTS_GCC3 += all-libiberty 
+  gcc_MAKE_ARGS_stage2a = $(if $(filter MAKEARGS=stage2,$2),configure-gcc configure-libcpp configure-build-libiberty all-libcpp all-build-libiberty)
+  gcc_MAKE_ARGS_stage2b = $(if $(filter MAKEARGS=stage2,$2),configure-libdecnumber all-libdecnumber && $4 $(MAKE) -C $$(@D)/gcc libgcc.mvars && sed 's@-lc@@g' < $$(@D)/gcc/libgcc.mvars > $$(@D)/gcc/libgcc.mvars.new && mv $$(@D)/gcc/libgcc.mvars.new $$(@D)/gcc/libgcc.mvars)
+  gcc_MAKE_ARGS_stage321  = all-gcc
+  gcc_MAKE_ARGS_stage321 += $(if $(filter MAKEARGS=stage2 MAKEARGS=stage3,$2),all-target-libgcc)
+  gcc_MAKE_ARGS_stage321 += $(if $(filter MAKEARGS=stage3,$2),all-target-libstdc++-v3)
 
-  gcc_MAKE_ARGS  = $(call TagSubst,MAKEARGS=stage1,all-gcc,$2)
-  gcc_MAKE_ARGS += $(call TagSubst,ALLTARGETLIBGCC,all-target-libgcc,$2)
-  gcc_MAKE_ARGS += $(call TagSubst,MAKEARGS=stage2,$(if $(filter gcc-4.%,$3),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC4),$(CROSS_GCC_STAGE2_MAKE_OPTS_GCC3)),$2)
+# huh?  gcc_MAKE_ARGS += $(call TagSubst,ALLTARGETLIBGCC,all-target-libgcc,$2)
 
 # remove build_dir argument
 #  gcc_MAKE_ARGS += $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2)
-#  gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc $(call TagCond,SYSROOT=%,build_tooldir=$$(%_TARGETFS_PREFIX)/$(subst TARGET=,,$(filter TARGET=%,$2)),,$2),$2)
 
-  gcc_POST_BUILD_STEPS = $(call TagSubst,MAKEARGS=stage2,+ $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4/gcc libgcc.mk && sed 's@-lc@@g' < $3$4/gcc/libgcc.mk > $3$4/gcc/libgcc.mk.new && mv $3$4/gcc/libgcc.mk.new $3$4/gcc/libgcc.mk && $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3$4 all-gcc,$2)
-
-  gcc_MAKE_INSTALL_ARGS  = $(call TagSubst,MAKEARGS=stage1,install-gcc,$2)
-  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,ALLTARGETLIBGCC,install-target-libgcc,$2)
-  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage2,install-gcc,$2)
-  gcc_MAKE_INSTALL_ARGS += $(call TagSubst,MAKEARGS=stage3,install,$2)
+  gcc_MAKE_INSTALL_ARGS  = $(if $(filter MAKEARGS=stage1 MAKEARGS=stage2,$2),install-gcc)
+  gcc_MAKE_INSTALL_ARGS += $(if $(filter MAKEARGS=stage2,$2),install-target-libgcc)
+  gcc_MAKE_INSTALL_ARGS += $(if $(filter MAKEARGS=stage3,$2),install)
 
   ## glibc-ports
 
@@ -170,6 +196,8 @@ ifndef MODULE_DETAILS_LOADED
 
   glibc_LICENSE := GPL
 
+  glibc_BUILD_DEPENDENCIES = gawk
+
   glibc_SYSROOT_DEPENDENCIES = binutils linux_headers gcc
 
   glibc_PRE_CONFIGURE_STEPS = cd $($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/$3; cp -f config.cache $$(@D)/config.cache; 
@@ -178,22 +206,24 @@ ifndef MODULE_DETAILS_LOADED
   glibc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   glibc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
   glibc_CONFIGURE_ARGS += --without-cvs            # ? from crosstool.sh
-  glibc_CONFIGURE_ARGS += --disable-sanity-checks # ? from crosstool.sh
+# codesourcery  glibc_CONFIGURE_ARGS += --disable-sanity-checks # ? from crosstool.sh
+  glibc_CONFIGURE_ARGS += --disable-multi-arch	  # codesourcery
   glibc_CONFIGURE_ARGS += $(patsubst SYSROOT=%,--with-headers=$$(%_TARGETFS_PREFIX)/usr/include,$(filter SYSROOT=%,$4))
-  glibc_CONFIGURE_ARGS += --enable-hacker-mode    # As of glibc-2.3.2, to get this step to work for hppa-linux
+# codesourcery  glibc_CONFIGURE_ARGS += --enable-hacker-mode    # As of glibc-2.3.2, to get this step to work for hppa-linux
   glibc_CONFIGURE_ARGS += --enable-add-ons=ports,$(call TagCond,THREAD=%,%,,$4)
-  glibc_CONFIGURE_ARGS += --with-tls
-  glibc_CONFIGURE_ARGS += --enable-kernel=2.6.9
-  glibc_CONFIGURE_ARGS += $(call TagCond,THREAD=linuxthreads,--without-__thread,--with-__thread,$4)
-  glibc_CONFIGURE_ARGS += $(call TagCond,DEBUG_GLIBC,,--enable-omitfp,$4)
+# codesourcery  glibc_CONFIGURE_ARGS += --with-tls
+  glibc_CONFIGURE_ARGS += --enable-kernel=2.6.16
+# codesourcery  glibc_CONFIGURE_ARGS += $(call TagCond,THREAD=linuxthreads,--without-__thread,--with-__thread,$4)
+# codesourcery  glibc_CONFIGURE_ARGS += $(call TagCond,DEBUG_GLIBC,,--enable-omitfp,$4)
   glibc_CONFIGURE_ARGS += $(call TagCond,DEBUG_GLIBC,--enable-profile,--disable-profile,$4)
-  glibc_CONFIGURE_ARGS += $(call TagCond,DEBUG_GLIBC,--enable-debug,--disable-debug,$4)
+# codesourcery  glibc_CONFIGURE_ARGS += $(call TagCond,DEBUG_GLIBC,--enable-debug,--disable-debug,$4)
   glibc_CONFIGURE_ARGS += --without-gd # from crosstool.sh: to avoid error "memusagestat.c:36:16: gd.h: No such file or directory" (see also http://sources.redhat.com/ml/libc-alpha/2000-07/msg00024.html)
   glibc_CONFIGURE_ARGS += --cache-file=config.cache    
 
   glibc_CONFIGURE_ARGS_TOTEST += --enable-bind-now
 
-  glibc_BUILD_ENVIRONMENT  = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
+  glibc_BUILD_ENVIRONMENT  = PATH=$(call cmerge,:,$(strip $(call TargetFS_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_BUILD_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_BUILD_PATH)))
+  glibc_BUILD_ENVIRONMENT += LD_LIBRARY_PATH=$(call cmerge,:,$(strip $(call TargetFS_Lib_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_LD_LIBRARY_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_LD_LIBRARY_PATH)))
   glibc_BUILD_ENVIRONMENT += libc_cv_ppc_machine=yes
   glibc_BUILD_ENVIRONMENT += libc_cv_forced_unwind=yes
   glibc_BUILD_ENVIRONMENT += libc_cv_c_cleanup=yes
@@ -250,7 +280,8 @@ ifndef MODULE_DETAILS_LOADED
 
   uClibc_LICENSE := LGPL
 
-  uClibc_BUILD_ENVIRONMENT = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
+  uClibc_BUILD_ENVIRONMENT  = PATH=$(call cmerge,:,$(strip $(call TargetFS_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_BUILD_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_BUILD_PATH)))
+  uClibc_BUILD_ENVIRONMENT += LD_LIBRARY_PATH=$(call cmerge,:,$(strip $(call TargetFS_Lib_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_LD_LIBRARY_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_LD_LIBRARY_PATH)))
 
   uClibc_MAKE_ARGS_step1 += V=1
   uClibc_MAKE_ARGS_step1 += HOSTCC=gcc
@@ -279,21 +310,45 @@ ifndef MODULE_DETAILS_LOADED
 
   gdb_SYSROOT_DEPENDENCIES = binutils linux_headers glibc gcc
 
-  gdb_TOOL_DEPENDENCIES = termcap
+  gdb_TOOL_DEPENDENCIES = termcap ncurses
 
-  gdb_BUILD_ENVIRONMENT  = PATH=$(if $(filter SYSROOT=%,$2),$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX)/bin:,$(filter SYSROOT=%,$2)))$(PATH)
-  gdb_BUILD_ENVIRONMENT += CC=gcc AR=ar
-  gdb_BUILD_ENVIRONMENT += $($1_TARGETFS_BUILD_ENV)
+  gdb_BUILD_ENVIRONMENT  = PATH=$(call cmerge,:,$(strip $(call TargetFS_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_BUILD_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_BUILD_PATH)))
+  gdb_BUILD_ENVIRONMENT += LD_LIBRARY_PATH=$(call cmerge,:,$(strip $(call TargetFS_Lib_Subpaths,$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))) $($(patsubst SYSROOT=%,%_TARGETFS_LD_LIBRARY_PATH,$(filter SYSROOT=%,$2))) $($1_TARGETFS_LD_LIBRARY_PATH)))
+  gdb_BUILD_ENVIRONMENT += CC_FOR_BUILD=gcc CC=gcc CXX=g++ AR=ar RANLIB=ranlib
+  gdb_BUILD_ENVIRONMENT += CPPFLAGS="-I$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))/usr/include $($1_TARGETFS_INCLUDES)"
+  gdb_BUILD_ENVIRONMENT += LDFLAGS="-L$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))/lib -L$($(patsubst SYSROOT=%,%_TARGETFS_PREFIX,$(filter SYSROOT=%,$2)))/usr/lib $($1_TARGETFS_LIBRARIES)"
 
   gdb_CONFIGURE_ARGS  = --prefix=/
+  gdb_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   gdb_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
-  gdb_CONFIGURE_ARGS += --disable-werror
   gdb_CONFIGURE_ARGS += $(call TagCond,TARGET=%,--target=%,,$4)
+  gdb_CONFIGURE_ARGS += --disable-sim
+  gdb_CONFIGURE_ARGS += --disable-nls
+  gdb_CONFIGURE_ARGS += --disable-werror
+  gdb_CONFIGURE_ARGS += --disable-tui
+  gdb_CONFIGURE_ARGS += --with-curses
   gdb_CONFIGURE_ARGS += $(if $(filter SYSROOT=%,$4),--with-sysroot=$(patsubst SYSROOT=%,$$(%_TARGETFS_PREFIX),$(filter SYSROOT=%,$4)))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,gmp),--with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpfr),--with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,mpc),--with-mpc=$(call $1_TargetFS_Tool_DESTDIR,mpc))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,ppl),--with-ppl=$(call $1_TargetFS_Tool_DESTDIR,ppl))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,cloog-parma),--with-cloog=$(call $1_TargetFS_Tool_DESTDIR,cloog-parma))
+  gdb_CONFIGURE_ARGS += $(if $(call $1_TargetFS_Tool_DESTDIR,libelf),--with-libelf=$(call $1_TargetFS_Tool_DESTDIR,libelf))
 
-  gdb_POST_BUILD_STEPS = +mkdir -p $3/gdbserver-build; cd $3/gdbserver-build; $(call gcc_BUILD_ENVIRONMENT,$1,$2) $3/gdb/gdbserver/configure --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE) --target=$($1_TARGETFS_TUPLE) --includedir=$(call TagReVal,SYSROOT,$$(%_TARGETFS_PREFIX)/sysroot/usr/include,$2); $(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build
+  gdb_POST_BUILD_STEPS = +mkdir -p $3/gdbserver-build; cd $3/gdbserver-build; $(call gdb_BUILD_ENVIRONMENT,$1,$2) $3/gdb/gdbserver/configure --build=$(HOST_TUPLE) --host=$($1_TARGETFS_TUPLE) --target=$($1_TARGETFS_TUPLE) --includedir=$(call TagReVal,SYSROOT,$$(%_TARGETFS_PREFIX)/sysroot/usr/include,$2); $(call gdb_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build
 
-  gdb_POST_INSTALL_STEPS = +$(call gcc_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build DESTDIR=$5 install
+  gdb_POST_INSTALL_STEPS = +$(call gdb_BUILD_ENVIRONMENT,$1,$2) $(MAKE) -C $3/gdbserver-build DESTDIR=$5 install
+
+  ## Ncurses
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += ncurses
+
+  ncurses_LICENSE := REDIST_OK
+
+  ncurses_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  ncurses_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  ncurses_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
+  ncurses_CONFIGURE_ARGS += --with-normal --with-shared --enable-overwrite --without-debug
 
   ## gmp
 
@@ -304,12 +359,27 @@ ifndef MODULE_DETAILS_LOADED
 
   gmp_LICENSE := GPL
 
-  gmp_BUILD_DEPENDENCIES = termcap
+  gmp_BUILD_DEPENDENCIES = termcap m4
+
+  gmp_RUNTIME_DEPENDENCIES = m4
 
   gmp_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
   gmp_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   gmp_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
   gmp_CONFIGURE_ARGS += --enable-shared --disable-static --enable-fft --enable-mpbsd --enable-cxx
+
+  gmp_INSTALLABLE_minimal += lib/libgmpxx.so.4.1.2
+  gmp_INSTALLABLE_minimal += lib/libmp.so.3.1.16
+  gmp_INSTALLABLE_minimal += lib/libgmp.so
+  gmp_INSTALLABLE_minimal += lib/libgmp.so.3
+  gmp_INSTALLABLE_minimal += lib/libgmpxx.so
+  gmp_INSTALLABLE_minimal += lib/libgmpxx.so.4
+  gmp_INSTALLABLE_minimal += lib/libmp.so
+  gmp_INSTALLABLE_minimal += lib/libgmp.so.3.5.2
+  gmp_INSTALLABLE_minimal += lib/libmp.so.3
+  gmp_INSTALLABLE_minimal += include/gmpxx.h
+  gmp_INSTALLABLE_minimal += include/mp.h
+  gmp_INSTALLABLE_minimal += include/gmp.h
 
   ## mpfr
 
@@ -320,12 +390,76 @@ ifndef MODULE_DETAILS_LOADED
 
   mpfr_LICENSE := GPL
 
-  mpfr_BUILD_DEPENDENCIES += gmp
+  mpfr_RUNTIME_DEPENDENCIES += gmp
 
   mpfr_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
   mpfr_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   mpfr_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
-  mpfr_CONFIGURE_ARGS += --enable-thread-safe --enable-shared --disable-static --with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp)
+  mpfr_CONFIGURE_ARGS += --enable-thread-safe --enable-shared --disable-static --with-gmp=$(or $($1_gmp_STAGE),$(call $1_TargetFS_Tool_DESTDIR,gmp),$($1_TARGETFS_PREFIX))
+
+  mpfr_INSTALLABLE_minimal += lib/libmpfr.so.1.2.2
+  mpfr_INSTALLABLE_minimal += lib/libmpfr.so.1
+  mpfr_INSTALLABLE_minimal += lib/libmpfr.so
+  mpfr_INSTALLABLE_minimal += include/mpf2mpfr.h
+  mpfr_INSTALLABLE_minimal += include/mpfr.h
+
+  ## ppl
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += ppl
+
+  CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS += ppl
+  ppl_COPY_TARGET := ppl
+
+  ppl_LICENSE := GPLv3
+
+  ppl_RUNTIME_DEPENDENCIES += gmp
+
+  ppl_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  ppl_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  ppl_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  ppl_CONFIGURE_ARGS += --target=$($1_TARGETFS_TUPLE)
+  ppl_CONFIGURE_ARGS += --disable-shared --disable-nls --disable-watchdog --with-libgmp-prefix=$(or $($1_gmp_STAGE),$(call $1_TargetFS_Tool_DESTDIR,gmp),$($1_TARGETFS_PREFIX))
+
+  ppl_INSTALLABLE_minimal += bin/ppl_lcdd
+  ppl_INSTALLABLE_minimal += bin/ppl-config
+  ppl_INSTALLABLE_minimal += lib/libppl_c.a
+  ppl_INSTALLABLE_minimal += lib/libppl.a
+  ppl_INSTALLABLE_minimal += include/ppl_c.h
+  ppl_INSTALLABLE_minimal += include/ppl.hh
+
+  ## cloog-parma
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += cloog-parma
+
+  CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS += cloog-parma
+  cloog-parma_COPY_TARGET := cloog-parma
+
+  cloog-parma_LICENSE := GPLv2
+
+  cloog-parma_RUNTIME_DEPENDENCIES += gmp ppl
+
+  cloog-parma_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  cloog-parma_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  cloog-parma_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  cloog-parma_CONFIGURE_ARGS += --target=$($1_TARGETFS_TUPLE)
+  cloog-parma_CONFIGURE_ARGS += --disable-shared --disable-nls --disable-watchdog --with-ppl=$(or $($1_ppl_STAGE),$(call $1_TargetFS_Tool_DESTDIR,ppl),$($1_TARGETFS_PREFIX)) --with-gmp-prefix=$(or $($1_gmp_STAGE),$(call $1_TargetFS_Tool_DESTDIR,gmp),$($1_TARGETFS_PREFIX))
+
+  ## cloog-ppl
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += cloog-ppl
+
+  CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS += cloog-ppl
+  cloog-ppl_COPY_TARGET := cloog-ppl
+
+  cloog-ppl_LICENSE := GPLv2
+
+  cloog-ppl_RUNTIME_DEPENDENCIES += gmp ppl
+
+  cloog-ppl_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  cloog-ppl_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  cloog-ppl_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  cloog-ppl_CONFIGURE_ARGS += --target=$($1_TARGETFS_TUPLE)
+  cloog-ppl_CONFIGURE_ARGS += --disable-shared --disable-nls --disable-watchdog --with-ppl=$(or $($1_ppl_STAGE),$(call $1_TargetFS_Tool_DESTDIR,ppl),$($1_TARGETFS_PREFIX)) --with-gmp-prefix=$(or $($1_gmp_STAGE),$(call $1_TargetFS_Tool_DESTDIR,gmp),$($1_TARGETFS_PREFIX))
 
   ## mpc
 
@@ -336,12 +470,27 @@ ifndef MODULE_DETAILS_LOADED
 
   mpc_LICENSE := LGPL
 
-  mpc_BUILD_DEPENDENCIES += gmp mpfr
+  mpc_RUNTIME_DEPENDENCIES += gmp mpfr
 
   mpc_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
   mpc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
   mpc_CONFIGURE_ARGS += $(if $(filter TARGET=%,$4),--host=$(subst TARGET=,,$(filter TARGET=%,$4)),--host=$($1_TARGETFS_TUPLE))
-  mpc_CONFIGURE_ARGS += --enable-static --disable-shared --with-gmp=$(call $1_TargetFS_Tool_DESTDIR,gmp)  --with-mpfr=$(call $1_TargetFS_Tool_DESTDIR,mpfr)
+  mpc_CONFIGURE_ARGS += --enable-static --disable-shared --with-gmp=$(or $($1_gmp_STAGE),$(call $1_TargetFS_Tool_DESTDIR,gmp),$($1_TARGETFS_PREFIX)) --with-mpfr=$(or $($1_mpfr_STAGE),$(call $1_TargetFS_Tool_DESTDIR,mpfr),$($1_TARGETFS_PREFIX))
+
+  ## libelf
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += libelf
+
+  CONFIGURE_TOOLS_KNOWN_SRC_PLUGINS += libelf
+  libelf_COPY_TARGET := libelf
+
+  libelf_LICENSE := LGPL
+
+  libelf_CONFIGURE_ARGS  = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  libelf_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  libelf_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  libelf_CONFIGURE_ARGS += --target=$($1_TARGETFS_TUPLE)
+  libelf_CONFIGURE_ARGS += --enable-static --enable-shared
 
  ## Syslinux
 
@@ -505,7 +654,7 @@ ifndef MODULE_DETAILS_LOADED
 
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += pkg-config
 
-  pkg-config_LICENSE := GPL
+  pkg-config_LICENSE := GPLv2
   pkg-config_BUILD_DEPENDENCIES := autoconf automake
 
   pkg-config_INSTALLABLE_default += bin/pkg-config
@@ -523,6 +672,64 @@ ifndef MODULE_DETAILS_LOADED
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += autoconf
 
   autoconf_LICENSE += GPL
+
+  autoconf_BUILD_DEPENDENCIES := m4
+
+  ## libunistring
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += libunistring
+
+  libunistring_LICENSE += GPLv3
+
+  ## libffi
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += libffi
+
+  libffi_LICENSE += REDIST_OK
+
+  ## gc
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += gc
+
+  gc_LICENSE += GPLv2
+
+  gc_CONFIGURE_ARGS = --prefix=$(call TagCond,NOSTAGE,$($1_TARGETFS_PREFIX),/,$4)
+  gc_CONFIGURE_ARGS += --build=$(HOST_TUPLE)
+  gc_CONFIGURE_ARGS += --host=$(HOST_TUPLE)
+  gc_CONFIGURE_ARGS += --target=$($1_TARGETFS_TUPLE)
+  gc_CONFIGURE_ARGS += --disable-static --enable-shared --disable-nls
+
+  ## guile
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += guile
+
+  guile_LICENSE += LGPL
+
+  guile_BUILD_DEPENDENCIES := gmp libunistring pkg-config libffi gc
+
+  ## autogen
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += autogen
+
+  autogen_LICENSE += GPLv3
+
+  autogen_BUILD_DEPENDENCIES := guile
+
+  ## m4
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += m4
+
+  m4_LICENSE += GPLv2
+
+  m4_INSTALLABLE_minimal += bin/m4
+
+  ## gawk
+
+  CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += gawk
+
+  gawk_LICENSE += GPLv3
+
+  gawk_INSTALLABLE_minimal += bin/gawk
 
   ## libtool
 
@@ -542,7 +749,7 @@ ifndef MODULE_DETAILS_LOADED
 
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += util-macros
 
-  util-macros_LICENSE += GPL
+  util-macros_LICENSE += REDIST_OK
 
   util-macros_BUILD_DEPENDENCIES := autoconf automake
 
@@ -626,13 +833,14 @@ ifndef MODULE_DETAILS_LOADED
 
   zlib_BUILD_DEPENDENCIES := 
 
-  zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR="$($1_TARGETFS_TUPLE)-ar rc" AS=$($1_TARGETFS_TUPLE)-as LD=$($1_TARGETFS_TUPLE)-gcc NM=$($1_TARGETFS_TUPLE)-nm CC=$($1_TARGETFS_TUPLE)-gcc GCC=$($1_TARGETFS_TUPLE)-gcc CXX=$($1_TARGETFS_TUPLE)-g++ STRIP=$($1_TARGETFS_TUPLE)-strip RANLIB=$($1_TARGETFS_TUPLE)-ranlib
+#  zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR="$($1_TARGETFS_TUPLE)-ar rc" AS=$($1_TARGETFS_TUPLE)-as LD=$($1_TARGETFS_TUPLE)-gcc NM=$($1_TARGETFS_TUPLE)-nm CC=$($1_TARGETFS_TUPLE)-gcc GCC=$($1_TARGETFS_TUPLE)-gcc CXX=$($1_TARGETFS_TUPLE)-g++ STRIP=$($1_TARGETFS_TUPLE)-strip RANLIB=$($1_TARGETFS_TUPLE)-ranlib
+  zlib_BUILD_ENVIRONMENT = $($1_TARGETFS_BUILD_ENV) AR="$($1_TARGETFS_TUPLE)-ar" AS=$($1_TARGETFS_TUPLE)-as LD=$($1_TARGETFS_TUPLE)-gcc NM=$($1_TARGETFS_TUPLE)-nm CC=$($1_TARGETFS_TUPLE)-gcc GCC=$($1_TARGETFS_TUPLE)-gcc CXX=$($1_TARGETFS_TUPLE)-g++ STRIP=$($1_TARGETFS_TUPLE)-strip RANLIB=$($1_TARGETFS_TUPLE)-ranlib
 
   zlib_CONFIGURE_ARGS = --shared --prefix=$(if $(filter NOSTAGE,$4),$($1_TARGETFS_PREFIX),$($1_TARGETFS_WORK)/$(call TargetFS_Build_Dir,$1,$3 $4 $6)/stage)
 
   zlib_INSTALLABLE_minimal += lib/libz.so
   zlib_INSTALLABLE_minimal += lib/libz.so.1
-  zlib_INSTALLABLE_minimal += lib/libz.so.1.2.3
+  zlib_INSTALLABLE_minimal += lib/libz.so.1.2.5
 
   zlib_INSTALLABLE_devel += include/zlib.h
   zlib_INSTALLABLE_devel += include/zconf.h
@@ -675,7 +883,7 @@ ifndef MODULE_DETAILS_LOADED
   freetype_INSTALLABLE_minimal += lib/libfreetype.so.6
   freetype_INSTALLABLE_minimal += lib/libfreetype.so
 
-  freetype_INSTALLABLE_devel += lib/libfreetype.a
+  freetype_INSTALLABLE_devel := bin/freetype-config
   freetype_INSTALLABLE_devel += include/freetype2/freetype/config/ftconfig.h
   freetype_INSTALLABLE_devel += include/freetype2/freetype/config/ftheader.h
   freetype_INSTALLABLE_devel += include/freetype2/freetype/config/ftmodule.h
@@ -723,11 +931,11 @@ ifndef MODULE_DETAILS_LOADED
   freetype_INSTALLABLE_devel += include/freetype2/freetype/tttags.h
   freetype_INSTALLABLE_devel += include/freetype2/freetype/ttunpat.h
   freetype_INSTALLABLE_devel += include/ft2build.h
-  freetype_INSTALLABLE_devel += bin/freetype-config
+  freetype_INSTALLABLE_devel += lib/libfreetype.a
+  freetype_INSTALLABLE_devel += lib/libfreetype.la
   freetype_INSTALLABLE_devel += share/aclocal/freetype2.m4
 
   freetype_PKGCONFIG += lib/pkgconfig/freetype2.pc
-
 
   ## fontconfig
 
@@ -1069,7 +1277,7 @@ ifndef MODULE_DETAILS_LOADED
 
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += xtrans
   xtrans_LICENSE += REDIST_OK
-  xtrans_PKGCONFIG += lib/pkgconfig/xtrans.pc
+  xtrans_PKGCONFIG := share/pkgconfig/xtrans.pc
 
   CONFIGURE_TOOLS_KNOWN_AUTOCONF_MODULES += libXau
   libXau_LICENSE += REDIST_OK
@@ -2100,12 +2308,10 @@ ifndef MODULE_DETAILS_LOADED
 
   Busybox_Arch = $(sort $(foreach arch,$(patsubst BUSYBOX_ARCHMAP_%,%,$(filter BUSYBOX_ARCHMAP%,$(.VARIABLES))),$(if $(filter $(BUSYBOX_ARCHMAP_$(arch)),$1),$(arch))))
 
-  busybox_MAKE_ARGS  = CROSS_COMPILE=$($1_TARGETFS_TUPLE)-
-  busybox_MAKE_ARGS += ARCH=$(call Busybox_Arch,$($1_TARGETFS_TUPLE))
+  busybox_MAKE_ARGS  = $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,CROSS_COMPILE=$($1_TARGETFS_TUPLE)- ARCH=$(call Busybox_Arch,$($1_TARGETFS_TUPLE)))
   busybox_MAKE_ARGS += V=1
 
-  busybox_MAKE_INSTALL_ARGS  = CROSS_COMPILE=$($1_TARGETFS_TUPLE)-
-  busybox_MAKE_INSTALL_ARGS += ARCH=$(call Fontconfig_Arch,$($1_TARGETFS_TUPLE))
+  busybox_MAKE_INSTALL_ARGS  = $(if $(filter $(HOST_TUPLE),$($1_TARGETFS_TUPLE)),,CROSS_COMPILE=$($1_TARGETFS_TUPLE)- ARCH=$(call Busybox_Arch,$($1_TARGETFS_TUPLE)))
   busybox_MAKE_INSTALL_ARGS += V=1
   busybox_MAKE_INSTALL_ARGS += install
 
